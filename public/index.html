@@ -1,0 +1,166 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Mortgage Voice Agent — Natural</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 800px; margin:auto; }
+    button { padding:8px 12px; margin:6px; }
+    #status { font-weight:600; }
+    #transcript { margin-top:10px; background:#f7f7f7; padding:8px; border-radius:6px; min-height:60px; }
+  </style>
+</head>
+<body>
+  <h1>Mortgage Voice Agent</h1>
+  <p>Speak naturally. Pause to send. Session is persisted in your browser.</p>
+  <div>
+    <button id="startBtn">Start</button>
+    <button id="stopBtn" disabled>Stop</button>
+    <span id="status">idle</span>
+  </div>
+  <div id="transcript">Assistant text will appear here...</div>
+  <audio id="player" controls></audio>
+
+<script>
+const START_THRESHOLD = 0.02;
+const SILENCE_THRESHOLD = 0.015;
+const SILENCE_TIMEOUT_MS = 700;
+const POLL_INTERVAL_MS = 100;
+const MIME_TYPE = "audio/webm";
+
+const startBtn = document.getElementById("startBtn");
+const stopBtn = document.getElementById("stopBtn");
+const statusEl = document.getElementById("status");
+const transcriptEl = document.getElementById("transcript");
+const player = document.getElementById("player");
+
+let audioContext, analyser, mediaStream, mediaRecorder, dataArray;
+let monitoringInterval, audioChunks = [], speaking=false, silenceStart=null, running=false, playing=false;
+
+startBtn.onclick = async () => { startBtn.disabled=true; stopBtn.disabled=false; await startAgent(); };
+stopBtn.onclick = async () => { stopBtn.disabled=true; startBtn.disabled=false; await stopAgent(); };
+
+function getSessionId() {
+  let sid = localStorage.getItem("voiceAgent.sessionId");
+  if (!sid) {
+    sid = 's_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+    localStorage.setItem("voiceAgent.sessionId", sid);
+  }
+  return sid;
+}
+
+async function startAgent() {
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+  } catch (e) { alert("Microphone required: " + e.message); startBtn.disabled=false; stopBtn.disabled=true; return; }
+
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const src = audioContext.createMediaStreamSource(mediaStream);
+  analyser = audioContext.createAnalyser(); analyser.fftSize = 2048;
+  dataArray = new Float32Array(analyser.fftSize);
+  src.connect(analyser);
+  running = true;
+  statusEl.textContent = "listening...";
+  monitoringInterval = setInterval(monitor, POLL_INTERVAL_MS);
+  audioChunks = []; speaking=false; silenceStart=null;
+}
+
+async function stopAgent() {
+  running = false;
+  statusEl.textContent = "stopped";
+  if (monitoringInterval) clearInterval(monitoringInterval);
+  monitoringInterval = null;
+  if (mediaRecorder && mediaRecorder.state !== "inactive") try{ mediaRecorder.stop(); }catch(e){}
+  mediaRecorder = null;
+  if (mediaStream) { mediaStream.getTracks().forEach(t=>t.stop()); mediaStream = null; }
+  if (audioContext) try{ await audioContext.close(); }catch(e){} audioContext = null;
+}
+
+function monitor() {
+  if (!analyser) return;
+  analyser.getFloatTimeDomainData(dataArray);
+  let sum=0;
+  for (let i=0;i<dataArray.length;i++) sum += dataArray[i]*dataArray[i];
+  const rms = Math.sqrt(sum / dataArray.length);
+
+  if (playing) { speaking=false; silenceStart=null; return; }
+
+  if (!speaking && rms >= START_THRESHOLD) {
+    speaking = true; silenceStart=null; startRecording(); statusEl.textContent="speaking...";
+    return;
+  }
+
+  if (speaking) {
+    if (rms < SILENCE_THRESHOLD) {
+      if (!silenceStart) silenceStart = Date.now();
+      else if (Date.now() - silenceStart >= SILENCE_TIMEOUT_MS) {
+        silenceStart = null; speaking = false; stopAndSend(); statusEl.textContent="sending...";
+      }
+    } else {
+      silenceStart = null;
+    }
+  }
+}
+
+function startRecording() {
+  if (!mediaStream) return;
+  if (mediaRecorder && mediaRecorder.state !== "inactive") return;
+  audioChunks = [];
+  try { mediaRecorder = new MediaRecorder(mediaStream, { mimeType: MIME_TYPE }); } catch(e) { mediaRecorder = new MediaRecorder(mediaStream); }
+  mediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) audioChunks.push(e.data); };
+  mediaRecorder.start();
+}
+
+async function stopAndSend() {
+  if (!mediaRecorder) { statusEl.textContent="listening..."; return; }
+  await new Promise((r) => { mediaRecorder.onstop = r; try{ mediaRecorder.stop(); }catch(e){ r(); } });
+  const blob = new Blob(audioChunks, { type: MIME_TYPE });
+  if (blob.size < 300) { statusEl.textContent="too short, continue..."; audioChunks=[]; mediaRecorder=null; return; }
+  if (monitoringInterval) { clearInterval(monitoringInterval); monitoringInterval=null; }
+
+  try {
+    statusEl.textContent = "uploading...";
+    const sid = getSessionId();
+    const fd = new FormData();
+    fd.append("audio", blob, "recording.webm");
+    fd.append("sessionId", sid);
+    const resp = await fetch("/api/voice", { method: "POST", body: fd });
+    const data = await resp.json();
+    if (!resp.ok) { statusEl.textContent = "Server error"; audioChunks=[]; mediaRecorder=null; monitoringInterval=setInterval(monitor, POLL_INTERVAL_MS); return; }
+    if (data.sessionId) localStorage.setItem("voiceAgent.sessionId", data.sessionId);
+    transcriptEl.textContent = data.text || "(no text returned)";
+    if (data.audioBase64) {
+      playing = true;
+      await playBase64(data.audioBase64);
+      playing = false;
+    }
+    statusEl.textContent = "listening...";
+  } catch (e) {
+    console.error(e);
+    statusEl.textContent = "network error";
+  } finally {
+    audioChunks = []; mediaRecorder = null;
+    if (!monitoringInterval && running) monitoringInterval = setInterval(monitor, POLL_INTERVAL_MS);
+  }
+}
+
+function playBase64(b64) {
+  return new Promise((resolve) => {
+    try {
+      const bytes = atob(b64);
+      const arr = new Uint8Array(bytes.length);
+      for (let i=0;i<bytes.length;i++) arr[i] = bytes.charCodeAt(i);
+      const blob = new Blob([arr.buffer], { type: "audio/mpeg" });
+      const url = URL.createObjectURL(blob);
+      player.src = url;
+      player.onended = () => { URL.revokeObjectURL(url); resolve(); };
+      player.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+      player.play().catch(() => resolve());
+    } catch (e) { resolve(); }
+  });
+}
+
+window.addEventListener("beforeunload", async () => { await stopAgent(); });
+</script>
+</body>
+</html>
