@@ -438,47 +438,412 @@ const sessions = new Map();
 */
 const BRAND = "InfiNET Broadband";
 
+// const KB = `
+// Knowledge base for ${BRAND} (use this to answer customer calls and chats concisely):
+// - Greeting / Routing:
+//   "Thanks for calling InfiNET Broadband, how may we help you? Would it be sales, support, or accounts?"
+//   If caller says sales/support/accounts, proceed accordingly and collect structured fields.
+// - Payment & Portal:
+//   "Did you know you can update your payment method via the customer portal?"
+//   If the customer does not have portal access, tell them: "If you don’t have access to the customer portal, please email support@infinetbroadband.com.au and our team will issue you the login credentials."
+// - Support contact:
+//   "If you are having issues with your Internet service please email support@infinetbroadband.com.au and our support team will be able to assist you."
+// - NBN vs OptiComm:
+//   "Both NBN and OptiComm deliver fibre internet in Australia. The main difference is availability: NBN is the national wholesale network while OptiComm is a private fibre network available in selected estates and buildings. Both offer similar speeds. InfiNET Broadband can connect you to either depending on what's available at your address."
+// - Common Qs to answer concisely:
+//   * Can I use my own or existing modem (BYO Modem) on the NBN & Opticomm Internet services?
+//     - Answer: Yes, you can bring your own compatible modem. If you’re unsure, our support team can help check compatibility. We also offer modems for purchase if you prefer a hassle-free setup.
+//   * Do you offer unlimited data on NBN & OptiComm Internet?
+//     - Answer: Yes, all of our NBN and OptiComm internet plans come with unlimited data. Stream, work, and play without worrying about data limits or excess charges.
+//   * How fast is NBN compared to OptiComm?
+//     - Answer: Speeds depend on your chosen plan. Both NBN and OptiComm can deliver speeds from 25 Mbps up to 1,000 Mbps in some areas. OptiComm may offer higher speeds in certain fibre-enabled estates, while NBN is more widely available across Australia.
+//   * How long does setup take to setup NBN or Opticomm?
+//     - Answer: In most cases, either NBN or OptiComm services can be activated within 30mins to 3 hours if your premises has already been connected. If your premise has never been connected before (new home or building) a tech visit is required, it may take a little longer as some new homes required an NTD (Network Termination Device) to be installed and this requires an onsite tech visit to be booked in by one of our team members. Our team will guide you through every step.
+//   * How do I check if my home has OptiComm?
+//     - Answer: They can check OptiComm coverage on the OptiComm website or ask InfiNET and we'll confirm quickly.
+// - Tone:
+//   * Always concise and professional.
+//   * Ask only one short question when collecting missing info.
+//   * Respect consent: ask once if no consent given; if consent given, record it in session.
+//   * When ready to create a ticket/lead, return explicit action or instruct handover.
+// - Contact info to use:
+//   * support@infinetbroadband.com.au
+// End KB.
+
+// --- Additional knowledge (appended exactly as requested) ---
+
+// Set-up a Payment Method
+// Here are the steps to set-up the payment method for recurring payments or one-time invoices.
+// 1. Go to the customer login portal (https://infinetbroadband-portal.com.au/)
+// 2. Login with the supplied username and password
+// 3. Once logged in, click on Finance, then select your payment method (Direct Debit or Credit/Debit card)
+// 4. Using the Credit/Debit card. Select the “Add Credit/Debit Card” option, click in and complete the fields “Cardholder Name” + “Card Number” + “Exp to:” & “CVV” within the spaces provided. Once filled in, click “Save and allow future changes”. This will then save your payment method and all future invoices will be debited automatically on the payment date using this payment method.
+// 5. Using the Direct Debit. Select the “Add Direct Debit Details” option and then add your bank details. Once filled in, click “Save and allow future changes”. This will then save your payment method and all future invoices will be debited automatically on the payment date using this payment method.
+
+// InfiNET Broadband - Manually paying an invoice
+// Here are the steps to pay an outstanding or overdue invoice, where the automatic payment method failed to process the credit card or Direct Debit.
+// 1. Go to the customer login portal (https://infinetbroadband-portal.com.au/)
+// 2. Login with the supplied username and password
+// 3. Once logged in, you can pay your account balance or invoice using the two methods indicated below from the dashboard or from the Finance/Documents menu. Click on the ✓ icon, select Credit Card or Direct Debit depending on what has been set-up.
+//    Note: You can select what documents are displayed using the dropdown box in the top right hand corner of the page, it defaults to show “All Types”
+// 4. The following screens are opened depending on what payment type you want to pay with. The invoice amount is showing and then click on the “Pay” button. This will process the payment and once cleared, mark the outstanding invoice as “PAID”
+
+// NBN® Fibre to the Premise Upgrade Explained
+// What is happening?
+// From March 2022, NBN will be upgrading more than 5 million businesses and homes using Fibre to the Node (FTTN) or Fibre to the Curb (FTTC) premises to Fibre to the Premises (FTTP) enabling access to NBN’s ultrafast, on demand plans.
+// To trigger an FTTP upgrade, customers just need to contact InfiNET Broadband to see if you are eligible, we will then do the rest for you!
+// How much does the NBN FTTP Upgrade Cost
+// All eligible addresses where a standard installation is required, can upgrade for a $0 installation.
+// You will need to sign up to one of InfiNET eligible high speed plans (Minimum speed plan to avail of the free upgrade is the 100/20Mbps)
+// Note: NBN will determine if an eligible address requires a non-standard installation. If the FTTP upgrade requires additional costs to complete the upgrade, NBN will advise before upgrading and approval is sought from the customer.
+// What is the FTTN, FTTC & FTTP NBN technology differences?
+// * Fibre to the Node (FTTN) – This connection is utilised where the existing copper phone and internet network from a nearby fibre node is used to make the final part of the connection to the nbn™ access network. In this scenario, a fibre optic line is run to the fibre node in the street, then the existing technology (copper cabling) in used to connect to the premise.
+// * Fibre to the Curb (FTTC) – connection is used in circumstances where fibre is extended close to your premises, connecting to a small Distribution Point Unit (DPU), generally located inside a pit on the street. From here, the existing copper network is connected to the fibre to form the final NBN™ connection into your premise. This will terminate into a NBN NCD (Network Connection Device.
+// * Fibre to the Premises (FTTP) – This connection types uses a fibre optic line run from the nearest available fibre node, directly to your premises. FTTP connections require an nbn™ utility box on the outside wall and an access network device to be installed inside your home. This device requires power to operate and can only be installed by an approved nbn™ installer or phone and internet provider.
+// What’s involved in the NBN FTTP Upgrade Installation
+// Additional work will be required to install new NBN equipment inside and outside of the premises to complete the fibre upgrade. There could be temporary service interruptions during the installation as NBN are working with a live network
+// Installation appointment
+// The nbn® approved technician will arrive to install the nbn® equipment inside and outside your premises. You, or an authorised person over the age of 18, will need to be present during the installation to give the technician both internal and external access to your premises. If you’re renting, make sure that you have the landlord or property manager’s verbal or written permission before the appointment. The technician may need to do work that will need approval – such as drilling into the property walls.
+// What to expect during the installation appointment?
+// * In most cases, this appointment will take between 3 to 4 hours. Please note it could take longer for complex connections.
+// * Activities performed by the technician includes installing and testing of the nbn®equipment inside and outside your premises
+// * The technician will advise on the best location to install the nbn®connection box inside your premises. You can speak to the technician about your options.
+// What happens during the installation appointment?
+// Activities performed by the nbn®approved technician include:
+// * Installation of the nbn®fibre lead-in along with the nbn® utility box and the drop cable (if it wasn’t installed during the pre-installation visit)
+//   * Installation of the nbn®connection box (inside or outside) and a Power Supply Unit (inside) your premises. The technician will advise on the best location to install this equipment (close to a power source, cool and dry, won’t get knocked)
+//   * Testing of the nbn®FTTP service to the nbn® connection box so that it’s ready for InfiNET Broadband to finalise the connection
+// The Pre-installation Visit (Not always required)
+// Here the nbn® approved technician will assess the outside of your premises. This will help us to identify any obstacles early and prepare for your upcoming installation appointment. The technician may find that additional pre-installation work is needed. NBN’s aim is to either return before your scheduled installation appointment or complete the work during the installation appointment.
+// What to expect during the pre-installation visit?
+// * In most cases, this visit will take on average between 45 minutes to 1.5 hours. Please keep in mind that complex connections may take longer.
+// * You, or an authorised person over the age of 18, do not need to be present for this appointment.
+// * If you’re renting, make sure that you have the landlord or property manager’s verbal or written permission before the visit. The technician may need to do work that will need approval – such as drilling into the property walls.
+// What happens during the pre-installation visit?
+// Activities performed by the nbn®approved technician include:
+// * Review of the external nbn®infrastructure on the street and civil works (as needed), such as clearage of any blockages in the pathway leading to your premises
+//   * Non-invasive construction activities such as hand digging, to remove blockages, and reinstatement of the land on or near your premises
+//   * Installation of nbn®fibre lead-in where required
+//   * Installation of nbn®utility box on the outside wall, so that there’s less to do during the installation appointment (if you’re present for the visit and with your consent)
+//   * Network civil works, including installation of the splitter multiport for the nbn®FTTC which requires a planned outage of around 30 minutes
+// NBN FTTP Hardware
+// Connecting a Modem/Router to a FTTP service
+// The following diagram outlines how to connect the modem/router to a FTTB service. You will require a NBN ready router.
+// 1. Power Port – Connection port for the Power
+// 2. UNI D & WAN Port – Is the port to connect the router to the NBN NCB UNI D port*
+// 3. Power Button – Button to turn the modem/router off/on
+// 4. UNI V 1 Port/s – To connect a telephone directly into the router
+
+// *You can have up to 4 active NBN services connected at the same time
+
+// NBN FTTN Technology Explained
+// Which NBN technology is available in my area?
+// You can check your address using our “Check your Address” to see if NBN is available and what connection type is available?
+// What is the FTTN NBN technology?
+// Fibre to the Node (FTTN) – This connection is utilised where the existing copper phone and internet network from a nearby fibre node is used to make the final part of the connection to the nbn™ access network. In this scenario, a fibre optic line is run to the fibre node in the street, then the existing technology (copper cabling) in used to connect to the premise.
+// Connecting a Modem/Router to a FTTN service – The following diagram outlines how to connect the ADSL/VDSL modem/router to a FTTN service. You will require a NBN ready ADSL/VDSL router that has a DSL port.
+// 1. Power Port – Connection port for the Power
+// 2. DSL Port – Is the port to connect the telephone cable from the phone line socket
+// 3. Phone Port/s – Is the port to connect a DECT phone into
+// 4. Power Button – Button to turn the modem/router off/on
+// 5. LAN Ports – To connect network, VoIP etc. devices into the router
+
+// TP-Link VX230v Install Guide
+// * 1. TP-Link VX230 LED Indicators Explained
+// * 2. TP-Link VX230 Ports Explained
+// * 3. Connecting to the TP-Link VX230v
+// * 4. Accessing the administration portal
+// * 5. TP-Link VX230vConfiguration
+// * 6. Adding a TP-Link HX220/510 (Wireless)
+// * 7. Adding a TP-Link HX220/510 (Ethernet)
+// * 8. Configuring the VoIP Telephone
+// Please note that your InfiNET Broadband supplied TP-Link VX230v router will come pre-configured with the settings to allow you to simply connect the router and have Plug-n-Play internet access. If you have factory reset your router, the following steps are required to reconfigure your TP-Link VX230v router.
+// 1. TP-Link VX230 LED Indicators Explained
+// LED Indicators (Left to Right)
+// * Power
+// * DSL
+// * Internet
+// * 2.4Ghz Wi-Fi
+// * 5Ghz W-Fi
+// * WAN
+// * LAN1
+// * LAN2
+// * LAN3
+// * WPS
+// * USB
+// * Phone
+// 2. TP-Link VX230 Ports Explained
+// 3. Connecting to the TP-Link VX230v
+// When configuring your TP-Link VX230, it is recommended to connect your device directly to TP-Link modem with the wired Ethernet cable. If this is not possible you can connect your device via Wi-Fi
+// 3.1 Connecting via an Ethernet Cable
+// Once the VX230v is connected successfully to power you can easily connect an Ethernet cable from the LAN ports to the Ethernet port of your computer or laptop. Please note, if using a Macbook or iMac you will need a Thunderbolt to Ethernet adapter to connect via this method
+// 3.2 Connecting via Wi-Fi
+// Using your wireless device (e.g. computer), search for available wireless networks and select the network called TP-Link_XXXX (XXXX is a random 4 digit alpha-numeric code assigned to your VX230v). You can also select the network TP-Link_XXXX_5G if you wish to connect to 5GHz network which offers faster Wi-Fi speed (if your device supports it) then enter the Security Key. By default, the security key can be found printed on the barcode sticker on the underside of the device, click ‘connect’ or ‘join’
+// 4. Accessing the administration portal
+// Once you’ve successfully connected to the VX230 via a Wi-Fi or Ethernet cable, you will be able to access the device using either of these URLs via a web-browser;
+// * http://tplinkmodem.net
+// * http://192.168.1.1
+// The first page you will reach is a page to set the password to your router. The VX230 access credentials will be one of two options:
+// * Router when Preconfigured – Password is set and provided by InfiNET
+// * Router when Factory Reset – The password will need to be reset. Contact InfiNET to obtain original password
+// Once you have set the password, you will need to enter it on the login page
+// 5. TP-Link VX230v Configuration
+// 5.1 Initial set-up after factory reset
+// Once logged into the VX230 administration router portal you will be taken to the Quick Setup wizard.
+// Select your Region and Time Zone. Once done, click the Next button
+// Next, select your Internet Service Provider (ISP), please select the option for Other. Once done, please click the Next button
+// Under Internet Setup, the settings required for this are different for each connection. This is supplied in the initial configuration settings InfiNET send out when your service is activated. If you can’t find this or are not sure which technology type your service uses, please contact InfiNET for further support. Once configured, please click Next
+// * EWAN = Connects using the TP-Link WAN Port (Ethernet Cable)
+//   * NBN FTTP/FTTC/HFC/Opticomm/HIR technologies*
+// * VDSL = Connects using the TP-Link DSL Port (phone cable)
+//   * NBN FTTB/FTTN technologies*
+// *Visit InfiNET Broadbands HELP section for explanations of Technologies Explained
+// Under the Wireless Settings leave this section as the default settings. Once done, click the Next button.
+// The next step is the Connection Test, this will confirm if the details you have entered as well as how the device is plugged in are correct and you are able to connect to the internet. If all goes to plan, you will get the following. Then please click the Next button.
+// If you receive the “Sorry!” message, please click Next button to continue. At the end of the Wizard, please contact InfiNET and we will be more than happy to assist resolving the issue/s.
+// The next page will show the summary of the setup you have just completed. Please click the Next button.
+// The next page is only required if you have purchased a VoIP Phone service through InfiNET and use the TP-Link to connect the DECT phone to. Please click Next button to continue. At the end of the Wizard, please contact InfiNET and we will be more than happy to assist configuring this for you or see Section 8 in this guide
+// More information of VoIP Phones and pricing, just visit our website here:
+// * Residential VoIP Phone Plans
+// * Business VoIP Phone Plans
+// * Business VoIP System Features
+// The final screen/step is the TP-Link Cloud Service Please just click on Log In Later If you would like to sign up you are welcome to. Please note any support on this will require contacting TP-Link Support
+// If you receive the “Failed.” message, please click Finish button to continue. At the end of the Wizard, please contact InfiNET and we will be more than happy to assist resolving the issue/s
+// 5.2 Modifying/Updating Internet Connection Settings
+// To check or update the TP-Link VX230 internet settings, login to the modem as shown in Section 4 of this document.
+// Click on the Internet Tab and select EWAN or DSL depending on the technology type at your service address
+// From the Internet Connection Type drop down, select the type required. This information is supplied in the initial configuration settings InfiNET send out when your service is activated. If you can’t find this or are not sure which technology type your service uses, please contact InfiNET for further support. Once configured, please click Next
+// 5.3 Modifying/Updating Wireless Settings
+// If you want or need to change the TP-Link VX230 wireless settings, login to the modem as shown in Section 4 of this document. Here you can change the name of the network name (SSID) and the password.
+// 6. Adding a TP-Link HX220/510 (Wireless)
+// The TP-Link VX230 allows you to add additional HX220/510 access points to create a Wi-Fi mesh network to increase the coverage of your Wi-Fi network and remove dead-zones.
+// To do this, login to the TP-Link VX230 modem as shown in Section 4 of this document. Under the Network Map tab, click on Add Mesh Device button
+// Make sure that you have the TP-Link HX220/510 unit powered on and sitting close to the main TP-Link VX230 (within 1m) with the LED flashing blue.
+// The Add more Mesh Devices pop up will appear. Following the instructions outlined
+// Once the new TP-Link HX220/510 is successfully added. You can add more or click Finish
+// Once the TP-Link HX220/510 is connected and you click “Finish” you will see the new HX220/510 showing connected under the Topology.
+// Note: Please leave the HX220/510 in place and powered on, for at least 2-3mins until the LED stops flashing blue and goes to a solid white. Once the TP-Link HX220/510 has a white LED, you can power if off and re-locate it. It must stay in range of the TP-Link VX230 to maintain the Mesh Network
+// 7. Adding a TP-Link HX220/510 (Ethernet)
+// The TP-Link VX230 allows you to add additional HX220/510 device/s to create a Wi-Fi mesh network to increase the coverage of your Wi-Fi network and remove dead-zones.
+// Make sure that you have the TP-Link HX220/510 unit powered on, with the LED flashing blue. Connect the HX220 WAN port to one of the TP-Link VX230 LAN ports using an ethernet cable. Once correctly connected, the TP-Link HX220/510 LED will turn solid white.
+// To check the connection, login to the TP-Link VX230 modem as shown in Section 4 of this document. Under the Network Map tab you will see the TP-Link HX220/510 connected (solid grey line indicates it’s connected using the Ethernet cable)
+// 8. Configuring the VoIP Telephone
+// The TP-Link VX230 allows you to configure a VoIP phone. To configure or check the VoIP Telephone settings supplied by InfiNET, click on the “Telephony” tab in the menu and select “Telephone Number”.
+// To Add a new VoIP service, click on the “Add” button or if a VoIP service is already configured, click the “Modify” Icon next to that service
+// Then check or add the VoIP settings supplied by InfiNET. If you do not have these, please contact us
+
+// NBN FTTP Technology Explained
+// Which NBN technology is available in my area?
+// You can check your address using our “Check your Address” to see if NBN is available and what connection type is available?
+// What is the FTTP NBN technology?
+// Fibre to the Premises (FTTP) – This connection types uses a fibre optic line run from the nearest available fibre node, directly to your premises. FTTP connections require an nbn™ utility box on the outside wall and an access network device to be installed inside your home. This device requires power to operate and can only be installed by an approved nbn™ installer or phone and internet provider.
+// Connecting a Modem/Router to a FTTP service – The following diagram outlines how to connect the modem/router to a FTTB service. You will require a NBN ready router.
+// 1. Power Port – Connection port for the Power
+// 2. UNI D & WAN Port – Is the port to connect the router to the NBN NCB UNI D port*
+// 3. Power Button – Button to turn the modem/router off/on
+// 4. UNI V 1 Port/s – To connect a telephone directly into the router
+
+// *You can have up to 4 active NBN services connected at the same time
+
+// NBN HFC Technology Explained
+// Which NBN technology is available in my area?
+// You can check your address using our “Check your Address” to see if NBN is available and what connection type is available?
+// What is the HFC NBN technology?
+// Hybrid Fibre Coaxial (HFC) – This connection is used in circumstances where the existing ‘pay TV’ or cable network can be used to make the final part of the nbn™ network connection. In this circumstance an HFC line will be run from the nearest available fibre node, to your premises. HFC connections require an nbn™ network device to be installed at the point where the line enters your home. This device requires power to operate.
+// Connecting a Modem/Router to a HFC service – The following diagram outlines how to connect the modem/router to a HFC service. You will require a NBN ready modem/router.
+// 1. Power Port – Connection port for the Power to the Modem/Router and NBN NCB
+// 2. Phone Line Socket & Wall socket Port – Is the socket within your premise where the coaxial cable is terminated and connects to the NBN NCB
+// 3. Gateway & WAN Port – Connect the NBN NCB to the WAN port on the router using an ethernet cable
+// 4. Power Button – Button to turn the modem/router off/on
+// 5. Phone Port/s – Is the port to connect a DECT phone into
+
+// What is my service class and what does it mean?
+// The ‘Service Class’ for your location is a way for the network provider to categorise and define how the internet is delivered to your address and identify what stages of installation has been completed.
+// While it isn’t particularly important to know what your class is, learning these can be helpful for understanding how the internet is delivered to your premises.
+// Click here to jump to the Opticomm section.
+// NBN Service Classes
+// Fibre to the Premises (FTTP)
+// ClassDefinitonService Class 0The location will be serviceable by fibre (FTTP) in the future, but it’s not ready yet – NBN hasn’t finished connecting the local area. infiNET customers can pre-sign, but you will have to wait until the area is ready for service.Service Class 1The location is serviceable by fibre, however no NBN equipment has been installed at the premises yet. You’re able to order a service and an installation appointment can be made.Service Class 2The location is ready to connect with fibre technology. The external devices have been installed at the premises, but no internal equipment is installed yet. You’re able to order a service and an installation appointment can be made.Service Class 3The location is fully installed and serviceable by fibre, with both the external and internal devices installed at the premises. You can order a service and it will be activated in 1-5 days.
+// Fixed Wireless (FW)
+// ClassDefinitonService Class 4The location is planned to be serviceable by Fixed Wireless, but the tower is not built or ready for use. You can’t connect yet, but infiNET customers can pre-sign. You’ll have to wait for NBN to announce the area is ready for service.Service Class 5The location is now serviceable by NBN Fixed Wireless, but there’s no equipment installed at the premises. You are able to order a service and an installation appointment can be made.Service Class 6The location is ready to connect with Fixed Wireless technology. The antenna and the NTD (NBN connection device) are installed. You can order a service and it will be activated in 1-5 days.
+// Satellite
+// ClassDefinitonService Class 7The location is planned to be serviceable by Sky Muster (Satellite), but the infrastructure is not built or ready for use. You can’t connect yet, but you may be able to pre-sign. You’ll have to wait for NBN to announce the area is ready for service.Service Class 8The location is now serviceable by Satellite, but there’s no dish or NBN connection box installed at the property yet. You are able to order a service and an installation appointment can be made.Service Class 9The location is ready to connect with Satellite technology. The antenna and the NBN connection device are installed. You can order a service and it can be activated remotely.
+// Fibre to the Node (FTTN)
+// ClassDefinitonService Class 10The location is planned to be serviceable by copper for FTTN/FTTB but is not ready yet. Customers can pre-sign with us, but NBN are still in planning stages. infiNET customers can pre-sign, but you will have to wait until the area is ready for service.Service Class 11The location is ready to connect using copper technology, but additional works are needed. It’s best to make some arrangements prior to your installation for the lead-in cabling. You’re able to order a service and an installation appointment can be made.Service Class 12The location is ready to connect using copper technology, but additional works are needed. This class only requires jumper cabling to connect you to the network. You’re able to order a service and an installation appointment can be made if the line is not already active. The technician will not attend the home and will perform required work at the node.Service Class 13The location is ready to connect using copper technology, and all required cabling is installed and connected. You can order a service and it will be activated in 1-5 days.
+// Hybrid Fibre Coaxial (HFC)
+// ClassDefinitonService Class 20The location will be serviceable by Hybrid Fibre (HFC) in the future, but it’s not ready yet – NBN hasn’t finished connecting the local area. infiNET customers can pre-sign, but you will have to wait until the area is ready for service.Service Class 21The location is ready to connect using hybrid fibre technology, but additional works are needed to install lead-in cabling. You’re able to order a service and an installation appointment can be made.Service Class 22The location is ready to connect using HFC technology, but additional works are needed to install a network device and wall point. You’re able to order a service and an installation appointment can be made.Service Class 23The location is ready to connect using HFC technology, but additional works may be needed to install a network device. You’re able to order a service and an installation appointment can be made if a self-installation kit cannot be used.Service Class 24The location is ready to connect using HFC technology, and all required cabling/equipment has been installed. You can order a service and it will be activated in 1-5 days.* 
+// *Sometimes, the network device (NTD) isn’t at the premises when you move in. If you cannot locate the device, please contact us as soon as possible to arrange a replacement unit.
+// Fibre to the Curb (FTTC)
+// ClassDefinitonService Class 30The location will be serviceable by copper and fibre (FTTC) in the future, but it’s not ready yet – NBN hasn’t finished connecting the local area. infiNET customers can pre-sign, but you will have to wait until the area is ready for service.Service Class 31The location is ready to connect using copper and fibre technologies, but additional works are needed to install lead-in cabling. You’re able to order a service and an installation appointment can be made.Service Class 32The location is ready to connect using copper and fibre technologies, but additional works are needed to connect the premises to a distribution point. You’re able to order a service and an installation appointment can be made.Service Class 33The location is ready to connect using FTTC, but additional works may be needed to install a network device. You’re able to order a service and an installation appointment can be made if a self-installation kit cannot be used.Service Class 34The location is ready to connect using FTTC, and all required cabling/equipment has been installed. You can order a service and it will be activated in 1-5 days.* 
+// *Sometimes, the network device (NCD) isn’t at the premises when you move in. If you cannot locate the device, please contact us as soon as possible to arrange a replacement unit.
+// OptiComm Service Classes
+// Fibre to the Premises (FTTP)
+// ClassDefinitonService Class 0The location will be serviceable by fibre (FTTP) in the future, but it’s not ready yet – OptiComm hasn’t finished connecting the local area.Service Class 1The location is serviceable by fibre, however no OptiComm equipment has been installed at the premises yet. You cannot place an order yet, but you may contact OptiComm directly to organise installation.*Service Class 2The location is ready to connect with fibre technology. The external devices have been installed at the premises, but no internal equipment is installed yet. You’re able to order a service and an installation appointment can be made and service then activated after payment clears**Service Class 3The location is fully installed and serviceable by fibre, with both the external and internal devices installed at the premises. You can order a service and it will be activated in 1-2 days.Service Class 5The location is fully installed and serviceable by fibre, with both the external and internal devices installed at the premises. However, a New Development Fee is payable to cover install costs. You can order a service and it will be activated after payment clears.***
+// *To proceed with an order at a Service Class 1 address, you’ll need to get in touch with OptiComm directly (Click Here)
+// **A New Connection Charge of $330.00 Inc. GST (Without MATV) or $550.00 Inc. GST (With MATV) will be charged when you sign up for a service at a property with a Service Class 2 assigned, for the first time only. Future connections at the address will not be charged this fee. MATV means multi-access television equipment connection is required. MATV is not available at all premises, Service Qualification (SQ) will confirm
+// ***A New Devlopment Charge of $300.00 Inc. GST will be charged when you sign up for a service at a property with a Service Class 5 assigned, for the first time only. Future connections at the address will not be charged this fee.
+
+// NBN FTTB Technology Explained
+// Which NBN technology is available in my area?
+// You can check your address using our “Check your Address” to see if NBN is available and what connection type is available?
+// What is the FTTB NBN technology?
+// Fibre to the Building (FTTB) – This connection is generally used when connecting an apartment block or similar types of buildings to the nbn™ access network. In this scenario, a fibre optic line is run to the fibre node in the building’s communications room, then the existing technology in the building (copper cabling) in used to connect to each apartment
+// Connecting a Modem/Router to a FTTB service – The following diagram outlines how to connect the ADSL/VDSL modem/router to a FTTB service. You will require a NBN ready ADSL/VDSL router that has a DSL port.
+// 1. Power Port – Connection port for the Power
+// 2. DSL Port – Is the port to connect the telephone cable from the phone line socket
+// 3. Phone Port/s – Is the port to connect a DECT phone into
+// 4. Power Button – Button to turn the modem/router off/on
+// 5. LAN Ports – To connect network, VoIP etc. devices into the router
+
+// NBN FTTC Technology Explained
+// Which NBN technology is available in my area?
+// You can check your address using our “Check your Address” to see if NBN is available and what connection type is available?
+// What is the FTTC NBN technology?
+// Fibre to the Curb (FTTC) – connection is used in circumstances where fibre is extended close to your premises, connecting to a small Distribution Point Unit (DPU), generally located inside a pit on the street. From here, the existing copper network is connected to the fibre to form the final NBN™ connection into your premise. This will terminate into a NBN NCD (Network Connection Device).
+// Connecting a Modem/Router to a FTTC service – The following diagram outlines how to connect the modem/router to a FTTC service. You will require a NBN ready modem/router.
+// 1. Power Port – Connection port for the Power to the NBN NCD
+// 2. Phone Line Socket & Wall socket Port – Is the socket within your premise where the telephone cable is terminated and connects to the NBN NCD
+// 3. Gateway & WAN Port – Connect the NBN NCD to the WAN port on the router using an ethernet cable
+// 4. Power Button – Button to turn the modem/router off/on
+
+// NBN Fixed Wireless Technology Explained
+// What is the NBN Fixed Wireless Technology?
+// Fixed Wireless – An nbn™ Fixed Wireless connection utilises data transmitted over radio signals to connect a premises to the nbn™ network. This connection is typically used in circumstances where the distance between premises can be many kilometres. Data travels from a transmission tower located as far as 14 kilometres, to an nbn™ outdoor antenna that has been fitted to the premises by an approved nbn™ installer. Fixed Wireless connections also require an nbn™ connection box to be installed at the point where the cable from the nbn™ outdoor antenna enters your premises. This device requires power to operate and can only be installed by an nbn™ approved installer
+// Connecting a Modem/Router to a HFC service – The following diagram outlines how to connect the modem/router to a NBN Fixed Wireless service. You will require a NBN ready modem/router.
+// 1. Power Port – Connection port for the Power to the Modem/Router and NBN NCB
+// 2. UNI-D Port 1 & WAN Port – Are the ports connecting the NCB to the Modem/Router
+// 3. Power Button – Button to turn the modem/router off/on
+// 4. Phone Port/s – Is the port to connect a DECT phone into
+
+// NBN Satellite Technology Explained
+// What is the NBN Satellite Technology?
+// Satellite – The Sky Muster™ satellite service delivers the nbn™ network to homes and businesses in regional and remote Australia, via two state-of-the-art satellites. So, people across mainland Australia and Tasmania, and remote islands such as Norfolk Island, Christmas Island, Lord Howe Island and the Cocos (Keeling) Islands can now enjoy nbn™ powered plans through Sky Muster™ satellite providers.
+// As well as the roof satellite dish installed on the home or business, Sky Muster™ satellite connections also require an nbn™ supplied modem to be installed at the point where the cable from the satellite dish enters the premises. This device requires power to operate and can only be installed by an nbn™ approved installer
+// Connecting a Modem/Router to a HFC service – The following diagram outlines how to connect the modem/router to a NBN Satellite service. You will require a NBN ready modem/router.
+// 1. Power Port – Connection port for the Power to the Modem/Router and NBN NCB
+// 2. Satellite Cable Wall Socket/Port – Cable connecting the NCB to the wall socket
+// 3. UNI-D Port 1 & WAN Port – Are the ports connecting the NCB to the Modem/Router
+// 4. Power Button – Button to turn the modem/router off/on
+// `;
 const KB = `
 Knowledge base for ${BRAND} (use this to answer customer calls and chats concisely):
-
 - Greeting / Routing:
   "Thanks for calling InfiNET Broadband, how may we help you? Would it be sales, support, or accounts?"
   If caller says sales/support/accounts, proceed accordingly and collect structured fields.
-
 - Payment & Portal:
   "Did you know you can update your payment method via the customer portal?"
   If the customer does not have portal access, tell them: "If you don’t have access to the customer portal, please email support@infinetbroadband.com.au and our team will issue you the login credentials."
-
 - Support contact:
   "If you are having issues with your Internet service please email support@infinetbroadband.com.au and our support team will be able to assist you."
-
 - NBN vs OptiComm:
   "Both NBN and OptiComm deliver fibre internet in Australia. The main difference is availability: NBN is the national wholesale network while OptiComm is a private fibre network available in selected estates and buildings. Both offer similar speeds. InfiNET Broadband can connect you to either depending on what's available at your address."
-
 - Common Qs to answer concisely:
   * Can I use my own or existing modem (BYO Modem) on the NBN & Opticomm Internet services?
     - Answer: Yes, you can bring your own compatible modem. If you’re unsure, our support team can help check compatibility. We also offer modems for purchase if you prefer a hassle-free setup.
-  * Do you offer unlimited data on NBN & Opticomm Internet?
+  * Do you offer unlimited data on NBN & OptiComm Internet?
     - Answer: Yes, all of our NBN and OptiComm internet plans come with unlimited data. Stream, work, and play without worrying about data limits or excess charges.
   * How fast is NBN compared to OptiComm?
     - Answer: Speeds depend on your chosen plan. Both NBN and OptiComm can deliver speeds from 25 Mbps up to 1,000 Mbps in some areas. OptiComm may offer higher speeds in certain fibre-enabled estates, while NBN is more widely available across Australia.
   * How long does setup take to setup NBN or Opticomm?
-    - Answer: In most cases, either NBN or Opticomm services can be activated within 30mins to 3 hours if your premises has already been connected. If your premise has never been connected before (new home or building) a tech visit is required, it may take a little longer as some new homes required an NTD (Network Termination Device) to be installed and this requires an onsite tech visit to be booked in by one of our team members. Our team will guide you through every step.
+    - Answer: In most cases, either NBN or OptiComm services can be activated within 30mins to 3 hours if your premises has already been connected. If your premise has never been connected before (new home or building) a tech visit is required, it may take a little longer as some new homes required an NTD (Network Termination Device) to be installed and this requires an onsite tech visit to be booked in by one of our team members. Our team will guide you through every step.
   * How do I check if my home has OptiComm?
     - Answer: They can check OptiComm coverage on the OptiComm website or ask InfiNET and we'll confirm quickly.
-
 - Tone:
   * Always concise and professional.
   * Ask only one short question when collecting missing info.
   * Respect consent: ask once if no consent given; if consent given, record it in session.
   * When ready to create a ticket/lead, return explicit action or instruct handover.
-
 - Contact info to use:
   * support@infinetbroadband.com.au
-
 End KB.
-`;
 
+Additional Knowledge Base – Concise Version
+
+Payment Setup & Manual Payment
+Customer portal: https://infinetbroadband-portal.com.au/
+
+To set up recurring payment (Direct Debit or Credit/Debit Card):
+1. Log in → Finance → Select payment method
+2. Credit/Debit Card: Add card details → Save and allow future charges
+3. Direct Debit: Add bank details → Save and allow future charges
+→ Future invoices auto-debit on due date.
+
+To manually pay an outstanding/overdue invoice (when auto-payment fails):
+1. Log in → Dashboard or Finance/Documents
+2. Select invoice/document (use dropdown to filter types)
+3. Click ✓ → Choose Credit Card or Direct Debit → Pay
+→ Marks invoice PAID once cleared.
+
+NBN FTTP Upgrade (from March 2022 onward)
+• Upgrades eligible FTTN / FTTC premises to FTTP (direct fibre to premises)
+• $0 standard installation if signing to eligible high-speed plan (min 100/20 Mbps)
+• Non-standard installs may incur costs (NBN advises & seeks approval first)
+• Contact InfiNET to check eligibility → we handle the request
+
+Key NBN Technologies – Summary
+• FTTP (Fibre to the Premises): Fibre direct to home. Requires NTD inside + utility box outside. Best speeds/reliability.
+• FTTN (Fibre to the Node): Fibre to street node → copper to home. Uses DSL port on modem.
+• FTTC (Fibre to the Curb): Fibre to pit/DPU → short copper to home. Uses NCD + ethernet to router WAN.
+• FTTB (Fibre to the Building): Fibre to building comms room → copper to unit/apartment. DSL modem.
+• HFC (Hybrid Fibre Coaxial): Uses existing cable TV coax. Coax to NTD → ethernet to router WAN.
+• Fixed Wireless: Radio from tower (up to ~14 km) → outdoor antenna → NTD inside.
+• Satellite (Sky Muster): Satellite dish → indoor modem/NTD.
+
+Modem/Router Connection – General Rules
+• FTTP / FTTC / HFC / Fixed Wireless / Satellite / OptiComm: Connect router WAN port to NBN NTD/NCD UNI-D port (ethernet cable). NBN-ready router required.
+• FTTN / FTTB: Connect DSL port to phone wall socket (VDSL/ADSL modem required).
+
+Service Classes – Quick Overview (NBN)
+Higher class = more infrastructure already in place → faster activation
+
+FTTP / FTTB / FTTC / HFC
+• 0 = Future serviceable, not ready yet (pre-order possible)
+• 1 = Serviceable, no equipment yet → book install
+• 2 = External installed, internal pending → book install
+• 3 = Fully installed → activate 1–5 days
+
+FTTN similar but uses Class 10–13 (copper-based readiness)
+
+Fixed Wireless: Class 4–6
+Satellite: Class 7–9
+(Details mirror pattern above)
+
+OptiComm FTTP Classes
+• 0 = Future, not ready
+• 1 = Serviceable, no equipment → contact OptiComm directly first
+• 2 = External done, internal pending → order + pay new connection fee ($330–$550 inc GST first time only)
+• 3 = Fully installed → activate 1–2 days
+• 5 = Fully installed + New Development Fee $300 inc GST (first time)
+
+TP-Link VX230v Router (InfiNET supplied – pre-configured plug & play)
+If factory reset → must reconfigure:
+
+LEDs (left to right): Power, DSL, Internet, 2.4G, 5G, WAN, LAN1–3, WPS, USB, Phone
+
+Access admin portal: http://tplinkmodem.net or http://192.168.1.1  
+(Initial password: contact InfiNET if reset)
+
+Quick Setup after reset:
+• Region & Time Zone
+• ISP = Other
+• Connection: EWAN (FTTP/FTTC/HFC/OptiComm) or VDSL (FTTN/FTTB)
+• Use settings supplied by InfiNET at activation
+• Wireless: leave default or customise later
+• Run connection test
+
+Change settings later: Internet tab (EWAN/DSL) or Wireless tab (SSID/password).
+
+Mesh Wi-Fi (HX220/510 extenders):
+• Wireless: Add via Network Map → place near VX230 (flashing blue) → auto-pair
+• Ethernet backhaul: Connect HX WAN → VX230 LAN → auto-detects
+
+VoIP (if subscribed):
+Telephony → Telephone Number → Add/Modify → enter InfiNET-provided VoIP credentials
+
+General Advice
+• Check address/technology: Use InfiNET “Check your Address” tool or ask support
+• Unsure about modem compatibility, settings, VoIP, etc. → email support@infinetbroadband.com.au
+`;
 /* ---------------- System prompt (includes KB) ---------------- */
 const SYSTEM_PROMPT = `
 You are a concise, professional voice/chat assistant for ${BRAND}.
