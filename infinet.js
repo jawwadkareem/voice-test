@@ -415,7 +415,7 @@ import OpenAI from "openai";
 dotenv.config();
 if (ffmpegStatic) ffmpeg.setFfmpegPath(ffmpegStatic);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3003;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 if (!OPENAI_API_KEY) {
   console.error("Please set OPENAI_API_KEY in your environment or .env");
