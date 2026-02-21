@@ -402,42 +402,127 @@
 
 // app.listen(PORT, () => console.log(`Agent server listening on http://localhost:${PORT}`));
 // server.js
-import express from "express";
-import multer from "multer";
-import fs from "fs";
-import path from "path";
-import cors from "cors";
-import dotenv from "dotenv";
-import ffmpeg from "fluent-ffmpeg";
-import ffmpegStatic from "ffmpeg-static";
-import OpenAI from "openai";
-
-dotenv.config();
-if (ffmpegStatic) ffmpeg.setFfmpegPath(ffmpegStatic);
-
-const PORT = process.env.PORT || 3003;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-if (!OPENAI_API_KEY) {
-  console.error("Please set OPENAI_API_KEY in your environment or .env");
-  process.exit(1);
-}
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-app.use(express.static("public"));
-
-const upload = multer({ dest: "uploads/" });
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
-
-/* ---------------- In-memory sessions (replace with Redis for production) ---------------- */
-const sessions = new Map();
-
-/* ---------------- Knowledge base (moved into system prompt) ----------------
-   NOTE: keep KB concise to avoid excessive prompt length. For large KB, consider retrieval.
+//extra 
+/* ---------------- Voice endpoint ----------------
+   Flow: upload audio -> skip conversion if webm -> transcribe -> function-call extraction -> final assistant reply -> tts mp3 base64
 */
-const BRAND = "InfiNET Broadband";
+// app.post("/api/voice", upload.single("audio"), async (req, res) => {
+//   const incomingSessionId = (req.body && req.body.sessionId) || req.query.sessionId || req.headers["x-session-id"] || null;
+//   if (!req.file) return res.status(400).json({ error: "Missing audio file (multipart field 'audio')" });
 
+//   const uploadedPath = path.resolve(req.file.path);
+//   let convertedPath = null;
+
+//   try {
+//     const session = (incomingSessionId && sessions.has(incomingSessionId)) ? sessions.get(incomingSessionId) : mkSession(incomingSessionId);
+
+//     // accept consent from client checkbox
+//     const consentField = (req.body && req.body.consent);
+//     if (consentField === "true" || consentField === true) session.consent = true;
+
+//     // Use webm/ogg directly when uploaded from browser to reduce latency
+//     const mimetype = req.file.mimetype || "";
+//     if (mimetype.includes("webm") || uploadedPath.endsWith(".webm") || uploadedPath.endsWith(".ogg") || uploadedPath.endsWith(".opus")) {
+//       convertedPath = uploadedPath; // skip conversion
+//     } else {
+//       convertedPath = await convertToWav(uploadedPath);
+//     }
+
+//     // Transcribe with OpenAI
+//     const transcriptionResp = await openai.audio.transcriptions.create({
+//       file: fs.createReadStream(convertedPath),
+//       model: "gpt-4o-mini-transcribe"
+//     });
+
+//     const userTextRaw = normalizeText(transcriptionResp?.text || "");
+//     if (!userTextRaw) {
+//       const prompt = "Sorry, I didn't catch that — could you please repeat briefly?";
+//       const ttsBuf = await makeTTS(prompt);
+//       session.lastSeen = new Date().toISOString();
+//       sessions.set(session.id, session);
+//       return res.json({ sessionId: session.id, text: prompt, audioBase64: ttsBuf ? ttsBuf.toString("base64") : null });
+//     }
+
+//     session.messages.push({ role: "user", content: userTextRaw });
+
+//     // local quick consent detection in speech transcript
+//     const low = userTextRaw.toLowerCase();
+//     const consentWords = ["yes","yeah","yep","sure","ok","okay","of course","i consent","record","نعم","ہاں","si","oui"];
+//     if (consentWords.some(w => low.includes(w))) {
+//       session.consent = true;
+//       session.messages.push({ role: "assistant", content: "User gave consent to record." });
+//     }
+
+//     // function-call extraction attempt (let the model use the KB in the system prompt)
+//     let extractionResult = null;
+//     try {
+//       const funcResp = await openai.chat.completions.create({
+//         model: "gpt-4o-mini",
+//         messages: session.messages,
+//         functions: [extractFunction],
+//         function_call: "auto",
+//         temperature: 0.0,
+//         max_tokens: 300
+//       });
+
+//       const choice = funcResp.choices?.[0];
+//       const msg = choice?.message;
+//       if (msg) {
+//         if (msg.function_call && msg.function_call.arguments) {
+//           const parsed = safeParseJSON(msg.function_call.arguments);
+//           if (parsed) {
+//             extractionResult = applyExtractionToSession(session, parsed);
+//             session.messages.push(msg);
+//           }
+//         } else if (msg.content) {
+//           session.messages.push({ role: "assistant", content: msg.content });
+//           const assistantText = msg.content;
+//           const ttsBuf = await makeTTS(assistantText);
+//           sessions.set(session.id, session);
+//           return res.json({ sessionId: session.id, text: assistantText, audioBase64: ttsBuf ? ttsBuf.toString("base64") : null });
+//         }
+//       }
+//     } catch (err) {
+//       console.warn("Function extraction failed:", err?.message || err);
+//     }
+
+//     // Compose final reply (model sees the KB via system prompt; it should answer using KB when possible)
+//     const collectedSummary = `CollectedFields: ${JSON.stringify(session.collected || {})}. Consent: ${session.consent === true}.`;
+//     const followupSystem = `You are a concise assistant. Use collected fields and do not re-ask already present info. If missing, ask one short question. Reply in English.`;
+
+//     const finalMessages = [
+//       { role: "system", content: followupSystem },
+//       ...session.messages,
+//       { role: "system", content: collectedSummary }
+//     ];
+
+//     const finalResp = await openai.chat.completions.create({
+//       model: "gpt-4o-mini",
+//       messages: finalMessages,
+//       temperature: 0.0,
+//       max_tokens: 350
+//     });
+
+//     const assistantText = finalResp.choices?.[0]?.message?.content?.trim() ||
+//                           `Thanks — I have your details. A human agent can contact you to continue.`;
+
+//     session.messages.push({ role: "assistant", content: assistantText });
+
+//     const ttsBuf = await makeTTS(assistantText);
+
+//     session.lastSeen = new Date().toISOString();
+//     sessions.set(session.id, session);
+
+//     return res.json({ sessionId: session.id, text: assistantText, audioBase64: ttsBuf ? ttsBuf.toString("base64") : null });
+
+//   } catch (err) {
+//     console.error("server error:", err);
+//     return res.status(500).json({ error: err?.message || "server error" });
+//   } finally {
+//     try { if (uploadedPath && fs.existsSync(uploadedPath)) fs.unlinkSync(uploadedPath); } catch(_) {}
+//     try { if (convertedPath && convertedPath !== uploadedPath && fs.existsSync(convertedPath)) fs.unlinkSync(convertedPath); } catch(_) {}
+//   }
+// });
 // const KB = `
 // Knowledge base for ${BRAND} (use this to answer customer calls and chats concisely):
 // - Greeting / Routing:
@@ -725,6 +810,41 @@ const BRAND = "InfiNET Broadband";
 // 3. UNI-D Port 1 & WAN Port – Are the ports connecting the NCB to the Modem/Router
 // 4. Power Button – Button to turn the modem/router off/on
 // `;
+
+// Replace only the /api/voice route in your server.js with this version.
+import express from "express";
+import multer from "multer";
+import fs from "fs";
+import path from "path";
+import cors from "cors";
+import dotenv from "dotenv";
+import ffmpeg from "fluent-ffmpeg";
+import ffmpegStatic from "ffmpeg-static";
+import OpenAI from "openai";
+
+dotenv.config();
+if (ffmpegStatic) ffmpeg.setFfmpegPath(ffmpegStatic);
+
+const PORT = process.env.PORT || 3003;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+if (!OPENAI_API_KEY) {
+  console.error("Please set OPENAI_API_KEY in your environment or .env");
+  process.exit(1);
+}
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(express.static("public"));
+
+const upload = multer({ dest: "uploads/" });
+const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+
+const sessions = new Map();
+
+const BRAND = "InfiNET Broadband";
+
+
 const KB = `
 Knowledge base for ${BRAND} (use this to answer customer calls and chats concisely):
 - Greeting / Routing:
@@ -1002,127 +1122,7 @@ app.post("/api/chat/init", async (req, res) => {
   }
 });
 
-/* ---------------- Voice endpoint ----------------
-   Flow: upload audio -> skip conversion if webm -> transcribe -> function-call extraction -> final assistant reply -> tts mp3 base64
-*/
-// app.post("/api/voice", upload.single("audio"), async (req, res) => {
-//   const incomingSessionId = (req.body && req.body.sessionId) || req.query.sessionId || req.headers["x-session-id"] || null;
-//   if (!req.file) return res.status(400).json({ error: "Missing audio file (multipart field 'audio')" });
 
-//   const uploadedPath = path.resolve(req.file.path);
-//   let convertedPath = null;
-
-//   try {
-//     const session = (incomingSessionId && sessions.has(incomingSessionId)) ? sessions.get(incomingSessionId) : mkSession(incomingSessionId);
-
-//     // accept consent from client checkbox
-//     const consentField = (req.body && req.body.consent);
-//     if (consentField === "true" || consentField === true) session.consent = true;
-
-//     // Use webm/ogg directly when uploaded from browser to reduce latency
-//     const mimetype = req.file.mimetype || "";
-//     if (mimetype.includes("webm") || uploadedPath.endsWith(".webm") || uploadedPath.endsWith(".ogg") || uploadedPath.endsWith(".opus")) {
-//       convertedPath = uploadedPath; // skip conversion
-//     } else {
-//       convertedPath = await convertToWav(uploadedPath);
-//     }
-
-//     // Transcribe with OpenAI
-//     const transcriptionResp = await openai.audio.transcriptions.create({
-//       file: fs.createReadStream(convertedPath),
-//       model: "gpt-4o-mini-transcribe"
-//     });
-
-//     const userTextRaw = normalizeText(transcriptionResp?.text || "");
-//     if (!userTextRaw) {
-//       const prompt = "Sorry, I didn't catch that — could you please repeat briefly?";
-//       const ttsBuf = await makeTTS(prompt);
-//       session.lastSeen = new Date().toISOString();
-//       sessions.set(session.id, session);
-//       return res.json({ sessionId: session.id, text: prompt, audioBase64: ttsBuf ? ttsBuf.toString("base64") : null });
-//     }
-
-//     session.messages.push({ role: "user", content: userTextRaw });
-
-//     // local quick consent detection in speech transcript
-//     const low = userTextRaw.toLowerCase();
-//     const consentWords = ["yes","yeah","yep","sure","ok","okay","of course","i consent","record","نعم","ہاں","si","oui"];
-//     if (consentWords.some(w => low.includes(w))) {
-//       session.consent = true;
-//       session.messages.push({ role: "assistant", content: "User gave consent to record." });
-//     }
-
-//     // function-call extraction attempt (let the model use the KB in the system prompt)
-//     let extractionResult = null;
-//     try {
-//       const funcResp = await openai.chat.completions.create({
-//         model: "gpt-4o-mini",
-//         messages: session.messages,
-//         functions: [extractFunction],
-//         function_call: "auto",
-//         temperature: 0.0,
-//         max_tokens: 300
-//       });
-
-//       const choice = funcResp.choices?.[0];
-//       const msg = choice?.message;
-//       if (msg) {
-//         if (msg.function_call && msg.function_call.arguments) {
-//           const parsed = safeParseJSON(msg.function_call.arguments);
-//           if (parsed) {
-//             extractionResult = applyExtractionToSession(session, parsed);
-//             session.messages.push(msg);
-//           }
-//         } else if (msg.content) {
-//           session.messages.push({ role: "assistant", content: msg.content });
-//           const assistantText = msg.content;
-//           const ttsBuf = await makeTTS(assistantText);
-//           sessions.set(session.id, session);
-//           return res.json({ sessionId: session.id, text: assistantText, audioBase64: ttsBuf ? ttsBuf.toString("base64") : null });
-//         }
-//       }
-//     } catch (err) {
-//       console.warn("Function extraction failed:", err?.message || err);
-//     }
-
-//     // Compose final reply (model sees the KB via system prompt; it should answer using KB when possible)
-//     const collectedSummary = `CollectedFields: ${JSON.stringify(session.collected || {})}. Consent: ${session.consent === true}.`;
-//     const followupSystem = `You are a concise assistant. Use collected fields and do not re-ask already present info. If missing, ask one short question. Reply in English.`;
-
-//     const finalMessages = [
-//       { role: "system", content: followupSystem },
-//       ...session.messages,
-//       { role: "system", content: collectedSummary }
-//     ];
-
-//     const finalResp = await openai.chat.completions.create({
-//       model: "gpt-4o-mini",
-//       messages: finalMessages,
-//       temperature: 0.0,
-//       max_tokens: 350
-//     });
-
-//     const assistantText = finalResp.choices?.[0]?.message?.content?.trim() ||
-//                           `Thanks — I have your details. A human agent can contact you to continue.`;
-
-//     session.messages.push({ role: "assistant", content: assistantText });
-
-//     const ttsBuf = await makeTTS(assistantText);
-
-//     session.lastSeen = new Date().toISOString();
-//     sessions.set(session.id, session);
-
-//     return res.json({ sessionId: session.id, text: assistantText, audioBase64: ttsBuf ? ttsBuf.toString("base64") : null });
-
-//   } catch (err) {
-//     console.error("server error:", err);
-//     return res.status(500).json({ error: err?.message || "server error" });
-//   } finally {
-//     try { if (uploadedPath && fs.existsSync(uploadedPath)) fs.unlinkSync(uploadedPath); } catch(_) {}
-//     try { if (convertedPath && convertedPath !== uploadedPath && fs.existsSync(convertedPath)) fs.unlinkSync(convertedPath); } catch(_) {}
-//   }
-// });
-// Replace only the /api/voice route in your server.js with this version.
 
 app.post("/api/voice", upload.single("audio"), async (req, res) => {
   const incomingSessionId = (req.body && req.body.sessionId) || req.query.sessionId || req.headers["x-session-id"] || null;
