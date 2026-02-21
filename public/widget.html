@@ -466,162 +466,386 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ISP Support Chat Widget — Integrated</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>InfiNET Support Chat</title>
   <style>
-    :root{--bg-1:#071025;--card:#081224;--muted:#9fb0c8;--accent:#00c2b3;--accent-2:#3b82f6;--glass: rgba(255,255,255,0.03);--radius:14px;--ease:cubic-bezier(.2,.9,.2,1);font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
-    body{background:linear-gradient(180deg,#031022 0%, #071425 100%);display:flex;align-items:center;justify-content:center;height:100vh;margin:0;padding:20px;color:#e6eef8}
-    .widget{width:380px;max-width:calc(100% - 40px);border-radius:16px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 12px 40px rgba(2,6,23,0.6);overflow:hidden;border:1px solid rgba(255,255,255,0.04);transform:translateZ(0)}
-    .header{display:flex;align-items:center;gap:12px;padding:14px 16px;background:linear-gradient(90deg, rgba(59,130,246,0.06), rgba(0,194,179,0.04));}
-    .brand{display:flex;gap:10px;align-items:center}
-    .logo{width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,var(--accent-2),var(--accent));display:grid;place-items:center;color:white;font-weight:700;font-size:16px;box-shadow:0 6px 18px rgba(59,130,246,0.08)}
-    .title{line-height:1}
-    .title h4{margin:0;font-size:15px}
-    .title p{margin:0;color:var(--muted);font-size:12px}
-    .header-controls{margin-left:auto;display:flex;gap:8px;align-items:center}
-    .status{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
-    .dot{width:10px;height:10px;border-radius:50%}
-    .dot.online{background:linear-gradient(180deg,#34d399,#10b981)}
-    .dot.offline{background:#666}
-    .messages-wrap{padding:14px;height:420px;display:flex;flex-direction:column;background:linear-gradient(180deg, rgba(255,255,255,0.005), rgba(255,255,255,0.01));}
-    .messages{flex:1;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
-    .bubble-row{display:flex;align-items:flex-end;gap:10px}
-    .msg{max-width:78%;padding:12px 14px;border-radius:12px;line-height:1.45;font-size:14px;box-shadow:0 6px 18px rgba(2,6,23,0.45);opacity:0;transform:translateY(6px);animation:pop .28s var(--ease) forwards}
-    @keyframes pop{to{opacity:1;transform:none}}
-    .msg.agent{align-self:flex-start;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);color:#e7f7f4;border-radius:12px 12px 12px 6px}
-    .msg.user{align-self:flex-end;background:linear-gradient(135deg,var(--accent-2),var(--accent));color:white;border-radius:12px 12px 6px 12px}
-    .avatar{width:36px;height:36px;border-radius:8px;background:#091127;display:inline-grid;place-items:center;color:#bfeef0;font-weight:600}
-    .meta{display:flex;gap:8px;align-items:center;margin-top:8px;font-size:11px;color:var(--muted)}
-    .composer{padding:12px 14px;background:linear-gradient(180deg, rgba(2,6,23,0.35), rgba(2,6,23,0.45));display:flex;gap:10px;align-items:flex-end}
-    .input-wrap{flex:1;display:flex;flex-direction:column;gap:6px}
-    textarea{width:100%;min-height:44px;max-height:120px;resize:none;padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);color:inherit;font-size:14px;outline:none}
-    .hint{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
-    .btn{background:linear-gradient(90deg,var(--accent-2),var(--accent));border:none;padding:10px 12px;border-radius:10px;color:white;font-weight:600;cursor:pointer}
-    .btn[disabled]{opacity:0.6;cursor:default}
-    .typing{display:inline-block;padding:6px 10px;border-radius:12px;background:rgba(255,255,255,0.03)}
-    .dots{display:inline-flex;gap:4px}
-    .dots span{width:6px;height:6px;border-radius:50%;background:var(--muted);opacity:0.6;animation:blink 1.2s infinite}
-    .dots span:nth-child(2){animation-delay:0.15s}
-    .dots span:nth-child(3){animation-delay:0.3s}
-    @keyframes blink{0%{opacity:0.15}50%{opacity:0.9}100%{opacity:0.15}}
-    .messages::-webkit-scrollbar{width:8px}
-    .messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.03);border-radius:10px}
-    .collected-badge{font-size:11px;color:var(--muted);padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:rgba(255,255,255,0.01)}
+    :root {
+      --bg:        #071025;
+      --card:      #081224;
+      --muted:     #a0b3d0;
+      --accent:    #00c2b3;
+      --accent-2:  #3b82f6;
+      --glass:     rgba(255,255,255,0.035);
+      --radius:    16px;
+      --fs-base:   clamp(13.5px, 3.1vw, 15px);
+      --spacing:   clamp(10px, 3vw, 16px);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size:   var(--fs-base);
+      color:       #f1f5f9;
+    }
 
-    /* ── Markdown styles ──────────────────────────────────────── */
-    .msg .text strong{font-weight:700}
-    .msg .text em{font-style:italic}
-    .msg .text p{margin:0 0 0.9em 0}
-    .msg .text p:last-child{margin-bottom:0}
-    .msg .text ol,.msg .text ul{margin:0.5em 0 0.5em 1.4em;padding-left:0}
-    .msg .text li{margin-bottom:0.35em}
-    .msg .text ol{list-style-type:decimal}
-    .msg .text ul{list-style-type:disc}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    @media (max-width:420px){.widget{width:100%;height:100%;border-radius:0}.messages-wrap{height:calc(100vh - 200px)}}
+    body {
+      background: linear-gradient(165deg, #031022 0%, #0b223f 100%);
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 8px;
+    }
+
+    .widget {
+      width:  min(100%, 420px);
+      height: min(96dvh, 760px);
+      border-radius: 20px;
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,0.07);
+      box-shadow: 0 8px 44px rgba(0,0,0,0.6);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(8px);
+    }
+
+    .header {
+      padding: 12px 16px;
+      background: linear-gradient(90deg, rgba(59,130,246,0.09), rgba(0,194,179,0.06));
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent));
+      color: white;
+      font-weight: 700;
+      font-size: 15px;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 3px 10px rgba(59,130,246,0.3);
+    }
+
+    .title h4 {
+      font-size: clamp(14.5px, 3.8vw, 16px);
+    }
+
+    .title p {
+      font-size: clamp(11px, 2.9vw, 12px);
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: clamp(11px, 2.9vw, 12.5px);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+    }
+    .dot.online {
+      background: #22c55e;
+      box-shadow: 0 0 6px #22c55e80;
+    }
+
+    .collected-badge {
+      font-size: 10.5px;
+      padding: 4px 9px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.09);
+      background: rgba(255,255,255,0.025);
+      display: none;
+    }
+
+    .messages-wrap {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(10px, 3vw, 14px);
+      scroll-behavior: smooth;
+    }
+
+    .messages::-webkit-scrollbar {
+      width: 5px;
+    }
+    .messages::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.12);
+      border-radius: 10px;
+    }
+
+    .bubble-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 9px;
+    }
+
+    .msg {
+      max-width: 82%;
+      padding: clamp(9px, 2.8vw, 12px) clamp(12px, 3.5vw, 15px);
+      border-radius: 15px;
+      line-height: 1.45;
+      font-size: clamp(13.5px, 3.4vw, 14.5px);
+      animation: appear 0.24s ease-out forwards;
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    @keyframes appear {
+      to { opacity:1; transform:none; }
+    }
+
+    .msg.agent {
+      align-self: flex-start;
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 15px 15px 15px 5px;
+      color: #f0fdfa;
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent));
+      color: white;
+      border-radius: 15px 15px 5px 15px;
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: #0f1e38;
+      color: #a5f3fc;
+      font-weight: 600;
+      font-size: 15px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .meta {
+      margin-top: 4px;
+      font-size: clamp(10px, 2.7vw, 11px);
+      color: var(--muted);
+      opacity: 0.8;
+    }
+
+    .composer {
+      padding: clamp(10px, 3vw, 14px) var(--spacing);
+      background: rgba(0,0,0,0.28);
+      display: flex;
+      gap: 10px;
+      flex-shrink: 0;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .input-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 46px;
+      max-height: 140px;
+      resize: vertical;
+      padding: 11px 13px;
+      border-radius: 13px;
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.09);
+      color: inherit;
+      font: inherit;
+      outline: none;
+      line-height: 1.42;
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2.5px rgba(0,194,179,0.22);
+    }
+
+    .hint {
+      font-size: clamp(10px, 2.7vw, 11.5px);
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      padding: 0 5px;
+    }
+
+    .btn {
+      background: linear-gradient(90deg, var(--accent-2), var(--accent));
+      border: none;
+      padding: 0 18px;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      font-size: clamp(13px, 3.4vw, 14.5px);
+      min-width: 62px;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .btn:hover:not(:disabled) {
+      opacity: 0.94;
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+    }
+
+    .typing {
+      align-self: flex-start;
+      padding: 9px 14px;
+      border-radius: 15px;
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* ──────────────────────────────────────────────── */
+    /* Responsive adjustments                          */
+    /* ──────────────────────────────────────────────── */
+
+    @media (max-width: 480px) {
+      .widget {
+        width: 100%;
+        height: 100dvh;
+        border-radius: 0;
+        box-shadow: none;
+        border: none;
+      }
+      .header    { padding: 12px 14px; }
+      .messages  { padding: 14px; }
+      .composer  { padding: 10px 14px; gap: 8px; }
+      .btn       { padding: 0 16px; min-width: 58px; }
+      textarea   { font-size: 14px; }
+    }
+
+    @media (max-height: 580px) {
+      .widget { height: 100dvh; }
+      .messages { padding: 10px; }
+      .composer { padding: 8px 12px; }
+    }
   </style>
 </head>
 <body>
-  <div class="widget" role="region" aria-label="ISP support chat widget">
+
+  <div class="widget" role="region" aria-label="InfiNET customer support chat">
     <div class="header">
       <div class="brand">
-        <div class="logo">ISP</div>
+        <div class="logo">IN</div>
         <div class="title">
           <h4>InfiNET Support</h4>
-          <p>Fast help — outages, billing, upgrades</p>
+          <p>Outages · Billing · Plans</p>
         </div>
       </div>
-      <div class="header-controls">
-        <div class="status" id="status">
-          <div class="dot online" id="statusDot"></div>
-          <div id="statusText">Online</div>
-        </div>
-        <div class="collected-badge" id="collectedBadge" style="display:none">Collected: —</div>
+      <div class="status" id="status">
+        <div class="dot online" id="statusDot"></div>
+        <span id="statusText">Online</span>
       </div>
+      <div class="collected-badge" id="collectedBadge" style="display:none">Collected: —</div>
     </div>
-    <div class="messages-wrap" id="messagesWrap">
+
+    <div class="messages-wrap">
       <div id="messages" class="messages" aria-live="polite"></div>
     </div>
+
     <div class="composer">
       <div class="input-wrap">
-        <textarea id="txt" placeholder="Describe your issue (Shift+Enter newline, Enter to send)" aria-label="Message input"></textarea>
-        <div class="hint"><span id="charCount">0</span><span style="color:var(--muted)">Press Enter to send</span></div>
+        <textarea id="txt" placeholder="Type your message… (Shift+Enter = new line)" aria-label="Chat message input"></textarea>
+        <div class="hint">
+          <span id="charCount">0</span>
+          <span>Enter to send</span>
+        </div>
       </div>
       <button class="btn" id="send">Send</button>
     </div>
   </div>
 
   <script>
+    // Your existing JavaScript code (unchanged – only CSS was adjusted)
     (async () => {
-      const messagesEl = document.getElementById('messages');
-      const txt = document.getElementById('txt');
-      const send = document.getElementById('send');
-      const statusDot = document.getElementById('statusDot');
-      const statusText = document.getElementById('statusText');
-      const charCount = document.getElementById('charCount');
+      const messagesEl   = document.getElementById('messages');
+      const txt          = document.getElementById('txt');
+      const sendBtn      = document.getElementById('send');
+      const statusDot    = document.getElementById('statusDot');
+      const statusText   = document.getElementById('statusText');
+      const charCount    = document.getElementById('charCount');
       const collectedBadge = document.getElementById('collectedBadge');
 
       let sessionId = null;
       let busy = false;
 
       function timeNow() {
-        const d = new Date();
-        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
       }
 
-      // Basic markdown → HTML converter (bold, italic, lists, paragraphs)
+      function escapeHtml(str) {
+        return String(str||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'})[m]);
+      }
+
       function renderMarkdown(text) {
-        let html = text
-          // Escape dangerous characters first
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          // Bold & italic
+        let html = escapeHtml(text)
           .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
           .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-          // Convert double newlines → paragraphs
-          .split(/\n\s*\n/)
-          .map(para => {
-            // Process lines inside paragraph
-            let lines = para.split('\n').map(line => line.trim());
-
-            // Numbered list detection
-            if (lines.every(l => /^\d+\.\s/.test(l))) {
-              let lis = lines.map(l => `<li>${l.replace(/^\d+\.\s/, '')}</li>`).join('');
-              return `<ol>${lis}</ol>`;
-            }
-            // Bullet list
-            else if (lines.every(l => /^[-•*]\s/.test(l))) {
-              let lis = lines.map(l => `<li>${l.replace(/^[-•*]\s/, '')}</li>`).join('');
-              return `<ul>${lis}</ul>`;
-            }
-            // Normal paragraph with single line breaks as <br>
-            else {
-              return `<p>${lines.join('<br>')}</p>`;
-            }
-          })
-          .join('');
-
-        return html || '<p> </p>'; // avoid empty message collapse
+          .replace(/\n\s*\n/g, '</p><p>')
+          .replace(/\n/g, '<br>');
+        html = html.replace(/((?:^|\n)\d+\.\s[^\n]*(?:\n\d+\.\s[^\n]*)*)/g, m =>
+          '<ol>' + m.replace(/^\d+\.\s/gm, '<li>').replace(/\n/g,'</li>\n') + '</li></ol>'
+        );
+        return `<p>${html}</p>`.replace(/<p><\/p>/g,'');
       }
 
-      function addMessage({ from = 'agent', text = '', meta = '' }) {
+      function addMessage({from='agent', text='', meta=''}) {
         const row = document.createElement('div');
         row.className = 'bubble-row';
 
-        const wrapper = document.createElement('div');
-        wrapper.className = 'msg ' + (from === 'user' ? 'user' : 'agent');
+        const msg = document.createElement('div');
+        msg.className = `msg ${from}`;
+        msg.innerHTML = `<div class="text">${
+          from === 'agent' ? renderMarkdown(text) : escapeHtml(text)
+        }</div>`;
 
         if (from === 'agent') {
-          wrapper.innerHTML = `<div class="text">${renderMarkdown(text)}</div>`;
-          const avatar = document.createElement('div');
-          avatar.className = 'avatar';
-          avatar.textContent = 'A';
-          row.appendChild(avatar);
-          row.appendChild(wrapper);
+          const av = document.createElement('div');
+          av.className = 'avatar';
+          av.textContent = 'I';
+          row.append(av, msg);
         } else {
-          wrapper.innerHTML = `<div class="text">${escapeHtml(text)}</div>`;
-          row.appendChild(wrapper);
+          row.append(msg);
         }
 
         const metaEl = document.createElement('div');
@@ -631,124 +855,88 @@
 
         messagesEl.appendChild(row);
         messagesEl.scrollTop = messagesEl.scrollHeight;
-        return wrapper;
       }
 
-      function escapeHtml(str) {
-        return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      function setStatus(online) {
+        statusDot.className = `dot ${online ? 'online' : 'offline'}`;
+        statusText.textContent = online ? 'Online' : 'Offline';
       }
 
-      function setStatus(isOnline) {
-        statusDot.className = 'dot ' + (isOnline ? 'online' : 'offline');
-        statusText.textContent = isOnline ? 'Online' : 'Offline';
-      }
-
-      function setBusy(v) {
-        busy = !!v;
-        send.disabled = busy;
-        if (busy) send.setAttribute('aria-busy', 'true');
-        else send.removeAttribute('aria-busy');
+      function setBusy(isBusy) {
+        busy = isBusy;
+        sendBtn.disabled = isBusy;
       }
 
       async function init() {
         setBusy(true);
         try {
-          const r = await fetch('/api/chat/init', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-          });
-          if (!r.ok) throw new Error('Init failed: ' + r.status);
-          const j = await r.json();
-          sessionId = j.sessionId;
-          localStorage.setItem('isp_chat_session', sessionId);
-
-          addMessage({
-            from: 'agent',
-            text: j.text || 'Hi — I\'m your ISP assistant. How can I help today?',
-            meta: ''
-          });
-
+          const res = await fetch('/api/chat/init', {method:'POST', headers:{'Content-Type':'application/json'}});
+          if (!res.ok) throw new Error(res.status);
+          const data = await res.json();
+          sessionId = data.sessionId;
+          localStorage.setItem('infinet_chat_session', sessionId);
+          addMessage({from:'agent', text: data.text || 'Hi! How can I help you today?'});
           setStatus(true);
-        } catch (e) {
-          console.error('init err', e);
-          addMessage({
-            from: 'agent',
-            text: 'Unable to connect to the chat service. Please try again later.'
-          });
+        } catch (err) {
+          addMessage({from:'agent', text: 'Connection issue. Please try again later.'});
           setStatus(false);
         } finally {
           setBusy(false);
         }
       }
 
-      async function sendMessage(message) {
+      async function sendMessage() {
+        const message = txt.value.trim();
         if (!message || busy) return;
         setBusy(true);
-        addMessage({ from: 'user', text: message });
+        addMessage({from:'user', text: message});
 
-        // typing indicator
-        const typingNode = document.createElement('div');
-        typingNode.className = 'msg agent';
-        typingNode.innerHTML = '<div class="typing"><span class="dots"><span></span><span></span><span></span></span> Thinking…</div>';
-        messagesEl.appendChild(typingNode);
+        const typing = document.createElement('div');
+        typing.className = 'msg agent';
+        typing.innerHTML = `<div class="typing">thinking<span class="dots">...</span></div>`;
+        messagesEl.appendChild(typing);
         messagesEl.scrollTop = messagesEl.scrollHeight;
 
         try {
-          const resp = await fetch('/api/chat/message', {
+          const res = await fetch('/api/chat/message', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId, message, channel: 'web' })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({sessionId, message, channel: 'web'})
           });
-          if (!resp.ok) throw new Error('message error ' + resp.status);
-          const j = await resp.json();
-
-          // remove typing
-          typingNode.remove();
-
-          if (j?.text) {
-            addMessage({ from: 'agent', text: j.text, meta: '' });
-          }
-
-          if (j?.collected) {
-            collectedBadge.style.display = '';
-            collectedBadge.textContent = 'Collected: ' + Object.keys(j.collected).join(', ') || '—';
-            console.log('collected fields', j.collected);
+          if (!res.ok) throw new Error(res.status);
+          const data = await res.json();
+          typing.remove();
+          if (data?.text) addMessage({from:'agent', text: data.text});
+          if (data?.collected) {
+            collectedBadge.style.display = 'inline-block';
+            collectedBadge.textContent = 'Collected: ' + Object.keys(data.collected).join(', ');
           }
         } catch (err) {
-          typingNode.remove();
-          console.error('send err', err);
-          addMessage({
-            from: 'agent',
-            text: 'Sorry — something went wrong sending your message. Please try again.'
-          });
+          typing.remove();
+          addMessage({from:'agent', text: 'Sorry — something went wrong. Try again?'});
           setStatus(false);
         } finally {
           setBusy(false);
           txt.value = '';
           charCount.textContent = '0';
           txt.focus();
+          messagesEl.scrollTop = messagesEl.scrollHeight;
         }
       }
 
-      // Event listeners
-      send.addEventListener('click', () => {
-        const m = txt.value.trim();
-        if (!m) return;
-        sendMessage(m);
-      });
+      sendBtn.onclick = sendMessage;
 
-      txt.addEventListener('keydown', (e) => {
+      txt.onkeydown = e => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
-          send.click();
+          sendMessage();
         }
-      });
+      };
 
-      txt.addEventListener('input', () => {
-        charCount.textContent = txt.value.length;
-      });
+      txt.oninput = () => charCount.textContent = txt.value.length;
 
-      // Start
+      txt.onfocus = () => setTimeout(() => messagesEl.scrollTop = messagesEl.scrollHeight, 280);
+
       await init();
       txt.focus();
     })();
