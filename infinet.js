@@ -855,8 +855,18 @@ Knowledge base for ${BRAND} (use this to answer customer calls and chats concise
   If the customer does not have portal access, tell them: "If you don’t have access to the customer portal, please email support@infinetbroadband.com.au and our team will issue you the login credentials."
 - Support contact:
   "If you are having issues with your Internet service please email support@infinetbroadband.com.au and our support team will be able to assist you."
+- Plan change / Upgrade:
+  "Did you want to upgrade or change the internet plan you are on? Please just email support@infinetbroadband.com.au and our support team will be able to assist you."
+- Outstanding / Overdue invoice:
+  "Do you have an outstanding or overdue invoice? If so, just login to the customer portal to manually pay this. You can also log a support ticket via support@infinetbroadband.com.au and our accounts team will be able to assist you."
+- Payment details changed / lost card / new bank:
+  "Have your payment details changed, lost a card, or changed bank details? Just login to the customer portal to update this manually, or you can also log a support ticket via support@infinetbroadband.com.au and our accounts team will be able to assist you."
+- Cannot login to portal:
+  "Not able to login to the customer portal? Just email support@infinetbroadband.com.au and our accounts team will be able to assist."
 - NBN vs OptiComm:
   "Both NBN and OptiComm deliver fibre internet in Australia. The main difference is availability: NBN is the national wholesale network while OptiComm is a private fibre network available in selected estates and buildings. Both offer similar speeds. InfiNET Broadband can connect you to either depending on what's available at your address."
+- Opticomm Free to Air TV issue:
+  "Infinet Broadband does not support your free to air television service. Please contact Opticomm directly — you can visit https://online.telco.opticomm.com.au/television-fault Thank you, goodbye."
 - Common Qs to answer concisely:
   * Can I use my own or existing modem (BYO Modem) on the NBN & Opticomm Internet services?
     - Answer: Yes, you can bring your own compatible modem. If you’re unsure, our support team can help check compatibility. We also offer modems for purchase if you prefer a hassle-free setup.
