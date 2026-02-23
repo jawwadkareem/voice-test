@@ -844,28 +844,168 @@ const sessions = new Map();
 
 const BRAND = "InfiNET Broadband";
 
+// const KB = `
+// Knowledge base for ${BRAND} (use this to answer customer calls and chats concisely):
+// - Greeting / Routing:
+//   "Thanks for calling InfiNET Broadband, how may we help you? Would it be sales, support, or accounts?"
+//   If caller says sales/support/accounts, proceed accordingly and collect structured fields.
+// - Payment & Portal:
+//   "Did you know you can update your payment method via the customer portal?"
+//   If the customer does not have portal access, tell them: "If you don’t have access to the customer portal, please email support@infinetbroadband.com.au and our team will issue you the login credentials."
+// - Support contact:
+//   "If you are having issues with your Internet service please email support@infinetbroadband.com.au and our support team will be able to assist you."
+// - Plan change / Upgrade:
+//   "Did you want to upgrade or change the internet plan you are on? Please just email support@infinetbroadband.com.au and our support team will be able to assist you."
+// - Outstanding / Overdue invoice:
+//   "Do you have an outstanding or overdue invoice? If so, just login to the customer portal to manually pay this. You can also log a support ticket via support@infinetbroadband.com.au and our accounts team will be able to assist you."
+// - Payment details changed / lost card / new bank:
+//   "Have your payment details changed, lost a card, or changed bank details? Just login to the customer portal to update this manually, or you can also log a support ticket via support@infinetbroadband.com.au and our accounts team will be able to assist you."
+// - Cannot login to portal:
+//   "Not able to login to the customer portal? Just email support@infinetbroadband.com.au and our accounts team will be able to assist."
+// - NBN vs OptiComm:
+//   "Both NBN and OptiComm deliver fibre internet in Australia. The main difference is availability: NBN is the national wholesale network while OptiComm is a private fibre network available in selected estates and buildings. Both offer similar speeds. InfiNET Broadband can connect you to either depending on what's available at your address."
+// - Opticomm Free to Air TV issue:
+//   "Infinet Broadband does not support your free to air television service. Please contact Opticomm directly — you can visit https://online.telco.opticomm.com.au/television-fault Thank you, goodbye."
+// - Common Qs to answer concisely:
+//   * Can I use my own or existing modem (BYO Modem) on the NBN & Opticomm Internet services?
+//     - Answer: Yes, you can bring your own compatible modem. If you’re unsure, our support team can help check compatibility. We also offer modems for purchase if you prefer a hassle-free setup.
+//   * Do you offer unlimited data on NBN & OptiComm Internet?
+//     - Answer: Yes, all of our NBN and OptiComm internet plans come with unlimited data. Stream, work, and play without worrying about data limits or excess charges.
+//   * How fast is NBN compared to OptiComm?
+//     - Answer: Speeds depend on your chosen plan. Both NBN and OptiComm can deliver speeds from 25 Mbps up to 1,000 Mbps in some areas. OptiComm may offer higher speeds in certain fibre-enabled estates, while NBN is more widely available across Australia.
+//   * How long does setup take to setup NBN or Opticomm?
+//     - Answer: In most cases, either NBN or OptiComm services can be activated within 30mins to 3 hours if your premises has already been connected. If your premise has never been connected before (new home or building) a tech visit is required, it may take a little longer as some new homes required an NTD (Network Termination Device) to be installed and this requires an onsite tech visit to be booked in by one of our team members. Our team will guide you through every step.
+//   * How do I check if my home has OptiComm?
+//     - Answer: They can check OptiComm coverage on the OptiComm website or ask InfiNET and we'll confirm quickly.
+// - Tone:
+//   * Always concise and professional.
+//   * Ask only one short question when collecting missing info.
+//   * Respect consent: ask once if no consent given; if consent given, record it in session.
+//   * When ready to create a ticket/lead, return explicit action or instruct handover.
+// - Contact info to use:
+//   * support@infinetbroadband.com.au
+// End KB.
+
+// Additional Knowledge Base – Concise Version
+
+// Payment Setup & Manual Payment
+// Customer portal: https://infinetbroadband-portal.com.au/
+
+// To set up recurring payment (Direct Debit or Credit/Debit Card):
+// 1. Log in → Finance → Select payment method
+// 2. Credit/Debit Card: Add card details → Save and allow future charges
+// 3. Direct Debit: Add bank details → Save and allow future charges
+// → Future invoices auto-debit on due date.
+
+// To manually pay an outstanding/overdue invoice (when auto-payment fails):
+// 1. Log in → Dashboard or Finance/Documents
+// 2. Select invoice/document (use dropdown to filter types)
+// 3. Click ✓ → Choose Credit Card or Direct Debit → Pay
+// → Marks invoice PAID once cleared.
+
+// NBN FTTP Upgrade (from March 2022 onward)
+// • Upgrades eligible FTTN / FTTC premises to FTTP (direct fibre to premises)
+// • $0 standard installation if signing to eligible high-speed plan (min 100/20 Mbps)
+// • Non-standard installs may incur costs (NBN advises & seeks approval first)
+// • Contact InfiNET to check eligibility → we handle the request
+
+// Key NBN Technologies – Summary
+// • FTTP (Fibre to the Premises): Fibre direct to home. Requires NTD inside + utility box outside. Best speeds/reliability.
+// • FTTN (Fibre to the Node): Fibre to street node → copper to home. Uses DSL port on modem.
+// • FTTC (Fibre to the Curb): Fibre to pit/DPU → short copper to home. Uses NCD + ethernet to router WAN.
+// • FTTB (Fibre to the Building): Fibre to building comms room → copper to unit/apartment. DSL modem.
+// • HFC (Hybrid Fibre Coaxial): Uses existing cable TV coax. Coax to NTD → ethernet to router WAN.
+// • Fixed Wireless: Radio from tower (up to ~14 km) → outdoor antenna → NTD inside.
+// • Satellite (Sky Muster): Satellite dish → indoor modem/NTD.
+
+// Modem/Router Connection – General Rules
+// • FTTP / FTTC / HFC / Fixed Wireless / Satellite / OptiComm: Connect router WAN port to NBN NTD/NCD UNI-D port (ethernet cable). NBN-ready router required.
+// • FTTN / FTTB: Connect DSL port to phone wall socket (VDSL/ADSL modem required).
+
+// Service Classes – Quick Overview (NBN)
+// Higher class = more infrastructure already in place → faster activation
+
+// FTTP / FTTB / FTTC / HFC
+// • 0 = Future serviceable, not ready yet (pre-order possible)
+// • 1 = Serviceable, no equipment yet → book install
+// • 2 = External installed, internal pending → book install
+// • 3 = Fully installed → activate 1–5 days
+
+// FTTN similar but uses Class 10–13 (copper-based readiness)
+
+// Fixed Wireless: Class 4–6
+// Satellite: Class 7–9
+// (Details mirror pattern above)
+
+// OptiComm FTTP Classes
+// • 0 = Future, not ready
+// • 1 = Serviceable, no equipment → contact OptiComm directly first
+// • 2 = External done, internal pending → order + pay new connection fee ($330–$550 inc GST first time only)
+// • 3 = Fully installed → activate 1–2 days
+// • 5 = Fully installed + New Development Fee $300 inc GST (first time)
+
+// TP-Link VX230v Router (InfiNET supplied – pre-configured plug & play)
+// If factory reset → must reconfigure:
+
+// LEDs (left to right): Power, DSL, Internet, 2.4G, 5G, WAN, LAN1–3, WPS, USB, Phone
+
+// Access admin portal: http://tplinkmodem.net or http://192.168.1.1
+// (Initial password: contact InfiNET if reset)
+
+// Quick Setup after reset:
+// • Region & Time Zone
+// • ISP = Other
+// • Connection: EWAN (FTTP/FTTC/HFC/OptiComm) or VDSL (FTTN/FTTB)
+// • Use settings supplied by InfiNET at activation
+// • Wireless: leave default or customise later
+// • Run connection test
+
+// Change settings later: Internet tab (EWAN/DSL) or Wireless tab (SSID/password).
+
+// Mesh Wi-Fi (HX220/510 extenders):
+// • Wireless: Add via Network Map → place near VX230 (flashing blue) → auto-pair
+// • Ethernet backhaul: Connect HX WAN → VX230 LAN → auto-detects
+
+// VoIP (if subscribed):
+// Telephony → Telephone Number → Add/Modify → enter InfiNET-provided VoIP credentials
+
+// General Advice
+// • Check address/technology: Use InfiNET “Check your Address” tool or ask support
+// • Unsure about modem compatibility, settings, VoIP, etc. → email support@infinetbroadband.com.au
+// `;
+
 const KB = `
-Knowledge base for ${BRAND} (use this to answer customer calls and chats concisely):
+Knowledge base for InfiNET Broadband (use this to answer customer calls and chats concisely):
+
 - Greeting / Routing:
   "Thanks for calling InfiNET Broadband, how may we help you? Would it be sales, support, or accounts?"
   If caller says sales/support/accounts, proceed accordingly and collect structured fields.
+
 - Payment & Portal:
   "Did you know you can update your payment method via the customer portal?"
   If the customer does not have portal access, tell them: "If you don’t have access to the customer portal, please email support@infinetbroadband.com.au and our team will issue you the login credentials."
+
 - Support contact:
   "If you are having issues with your Internet service please email support@infinetbroadband.com.au and our support team will be able to assist you."
+
 - Plan change / Upgrade:
   "Did you want to upgrade or change the internet plan you are on? Please just email support@infinetbroadband.com.au and our support team will be able to assist you."
+
 - Outstanding / Overdue invoice:
   "Do you have an outstanding or overdue invoice? If so, just login to the customer portal to manually pay this. You can also log a support ticket via support@infinetbroadband.com.au and our accounts team will be able to assist you."
+
 - Payment details changed / lost card / new bank:
   "Have your payment details changed, lost a card, or changed bank details? Just login to the customer portal to update this manually, or you can also log a support ticket via support@infinetbroadband.com.au and our accounts team will be able to assist you."
+
 - Cannot login to portal:
   "Not able to login to the customer portal? Just email support@infinetbroadband.com.au and our accounts team will be able to assist."
+
 - NBN vs OptiComm:
   "Both NBN and OptiComm deliver fibre internet in Australia. The main difference is availability: NBN is the national wholesale network while OptiComm is a private fibre network available in selected estates and buildings. Both offer similar speeds. InfiNET Broadband can connect you to either depending on what's available at your address."
+
 - Opticomm Free to Air TV issue:
   "Infinet Broadband does not support your free to air television service. Please contact Opticomm directly — you can visit https://online.telco.opticomm.com.au/television-fault Thank you, goodbye."
+
 - Common Qs to answer concisely:
   * Can I use my own or existing modem (BYO Modem) on the NBN & Opticomm Internet services?
     - Answer: Yes, you can bring your own compatible modem. If you’re unsure, our support team can help check compatibility. We also offer modems for purchase if you prefer a hassle-free setup.
@@ -877,26 +1017,25 @@ Knowledge base for ${BRAND} (use this to answer customer calls and chats concise
     - Answer: In most cases, either NBN or OptiComm services can be activated within 30mins to 3 hours if your premises has already been connected. If your premise has never been connected before (new home or building) a tech visit is required, it may take a little longer as some new homes required an NTD (Network Termination Device) to be installed and this requires an onsite tech visit to be booked in by one of our team members. Our team will guide you through every step.
   * How do I check if my home has OptiComm?
     - Answer: They can check OptiComm coverage on the OptiComm website or ask InfiNET and we'll confirm quickly.
+
 - Tone:
   * Always concise and professional.
   * Ask only one short question when collecting missing info.
   * Respect consent: ask once if no consent given; if consent given, record it in session.
   * When ready to create a ticket/lead, return explicit action or instruct handover.
+
 - Contact info to use:
   * support@infinetbroadband.com.au
-End KB.
 
 Additional Knowledge Base – Concise Version
 
 Payment Setup & Manual Payment
 Customer portal: https://infinetbroadband-portal.com.au/
-
 To set up recurring payment (Direct Debit or Credit/Debit Card):
 1. Log in → Finance → Select payment method
 2. Credit/Debit Card: Add card details → Save and allow future charges
 3. Direct Debit: Add bank details → Save and allow future charges
 → Future invoices auto-debit on due date.
-
 To manually pay an outstanding/overdue invoice (when auto-payment fails):
 1. Log in → Dashboard or Finance/Documents
 2. Select invoice/document (use dropdown to filter types)
@@ -924,15 +1063,12 @@ Modem/Router Connection – General Rules
 
 Service Classes – Quick Overview (NBN)
 Higher class = more infrastructure already in place → faster activation
-
 FTTP / FTTB / FTTC / HFC
 • 0 = Future serviceable, not ready yet (pre-order possible)
 • 1 = Serviceable, no equipment yet → book install
 • 2 = External installed, internal pending → book install
 • 3 = Fully installed → activate 1–5 days
-
 FTTN similar but uses Class 10–13 (copper-based readiness)
-
 Fixed Wireless: Class 4–6
 Satellite: Class 7–9
 (Details mirror pattern above)
@@ -946,12 +1082,9 @@ OptiComm FTTP Classes
 
 TP-Link VX230v Router (InfiNET supplied – pre-configured plug & play)
 If factory reset → must reconfigure:
-
 LEDs (left to right): Power, DSL, Internet, 2.4G, 5G, WAN, LAN1–3, WPS, USB, Phone
-
-Access admin portal: http://tplinkmodem.net or http://192.168.1.1  
+Access admin portal: http://tplinkmodem.net or http://192.168.1.1
 (Initial password: contact InfiNET if reset)
-
 Quick Setup after reset:
 • Region & Time Zone
 • ISP = Other
@@ -959,7 +1092,6 @@ Quick Setup after reset:
 • Use settings supplied by InfiNET at activation
 • Wireless: leave default or customise later
 • Run connection test
-
 Change settings later: Internet tab (EWAN/DSL) or Wireless tab (SSID/password).
 
 Mesh Wi-Fi (HX220/510 extenders):
@@ -972,7 +1104,122 @@ Telephony → Telephone Number → Add/Modify → enter InfiNET-provided VoIP cr
 General Advice
 • Check address/technology: Use InfiNET “Check your Address” tool or ask support
 • Unsure about modem compatibility, settings, VoIP, etc. → email support@infinetbroadband.com.au
+
+--- Consolidated FAQs, Hardware, Security & Plans (Residential & Business) ---
+
+- Common Residential FAQs (answer concisely):
+  * What NBN speed for streaming? For HD, NBN 25 usually enough; 4K or multiple devices recommend NBN 50+.
+  * Keep landline with NBN? Yes, via VoIP (port existing number on most plans).
+  * BYO modem on NBN/OptiComm? Yes if compatible; support can check; we offer hassle-free options.
+  * NBN installation time? 2–10 business days typical; pre-connected: 30 mins–3 hrs; new may need tech/NTD.
+  * Move house? Transfer plan; we check availability and re-activate.
+  * Unlimited data? Yes on all plans.
+  * OptiComm check? OptiComm site or ask us.
+  * OptiComm vs NBN speed? Similar tiers; OptiComm (FTTP) often more consistent.
+
+- Hope Island Resort (HIR) FAQs:
+  * HIR Internet: Private high-speed (fibre + HFC) in Hope Island Resort, up to 1000 Mbps, fail-over, no connection fees/contracts.
+  * Tech: FTTP/HFC (varies); ultra-fast available.
+  * BYO modem: Yes, most compatible.
+  * Speeds: Up to 1000 Mbps.
+
+- NBN Fixed Wireless FAQs:
+  * What it is: Tower radio to antenna + box; free standard install.
+  * Good for remote? Yes, improved reliability.
+  * Speeds: Vary by location/congestion/equipment.
+
+- NBN Sky Muster FAQs:
+  * What it is: Satellite for remote; dish + modem; free install.
+  * Speeds: Up to 100/5 wholesale (varies; latency typical).
+  * Good option: Yes for no fixed line.
+  * Switch: Address eligibility dependent.
+
+- Residential VoIP FAQs:
+  * VoIP: Internet calls; cheaper, no rental.
+  * Keep number: Yes, port most free.
+  * Works with: NBN/OptiComm.
+
+- Residential Hardware:
+  * TP-Link VX230v AX1800: $179 (WiFi 6, VoIP, pre-configured).
+  * VX230v + HX510 Mesh: 1-pack $318, 2-pack $459.
+  * HX510 Mesh AP: 1-pack $159, 2-pack $299.
+  * VX420 4G failover: $319 (not FTTB/FTTN).
+
+- Residential Security:
+  * Basic: $9.95/m (Anti-Virus, patching, remote).
+  * Bronze: $19.95/m (+ Web Protection, 1 session/m).
+  * Silver: $44.95/m (+ 3 sessions/m).
+  * Gold: $65.95/m (+ Unlimited support, DNS, reporting).
+
+- Residential Plans (intro discounts new customers; confirm address):
+  NBN (unlimited, no contract, month-to-month):
+  - 25/10 Basic: $59/m ($5 off 3m, then $64) – FTTC/FTTN/FTTB/FTTP/HFC
+  - 50/20 Standard: $74/m ($5 off 3m, then $79)
+  - 100/20 Fast: $84/m ($5 off 3m, then $89)
+  - 500/50 Faster: $84/m ($5 off 3m, then $89) – FTTP/HFC
+  - 750/50 Superfast: $99/m ($10 off 3m, then $109) – FTTP/HFC
+  - 1000/100 Ultrafast: $109/m ($10 off 3m, then $119) – FTTP/HFC
+
+  OptiComm (FTTP, reliable fibre):
+  - 25/10: $64/m ($5 off 3m, then $69)
+  - 50/20: $74/m ($5 off 3m, then $79)
+  - 100/20: $84/m ($5 off 3m, then $89) – limited capacity
+  - 500/50: $79/m ($10 off 3m, then $89)
+  - 750/50: $89/m ($10 off 3m, then $99)
+  - 1000/100: $99/m ($10 off 3m, then $109)
+
+  Hope Island Resort:
+  - 25/10: $44/m ($15 off 3m, then $59)
+  - 50/20: $49/m ($15 off 3m, then $64)
+  - 250/50: $64/m ($15 off 3m, then $79)
+  - 500/50: $64/m ($15 off 3m, then $79) – free upgrade if needed
+  - 750/50: $74/m ($15 off 3m, then $89)
+  - 1000/100: $84/m ($15 off 3m, then $99)
+
+  Fixed Wireless:
+  - 25/10: $59/m
+  - 75/10: $89/m
+  - 200/20: $99/m
+  - 400/40: $109/m (eligible areas)
+
+  Sky Muster:
+  - 25/5: $59/m
+  - 50/5: $69/m
+  - 100/5: $99/m
+
+- Business Plans & FAQs:
+  * NBN Business: Static IP, priority support, higher uploads.
+  - 50/20: $89/m
+  - 100/40: $109/m
+  - 250/100: $149/m (FTTP/HFC)
+  - 500/200: $189/m (FTTP/HFC)
+  - 1000/400: $239/m (FTTP/HFC)
+
+  * OptiComm Business: Static IP; fee waiver possible (24m $0/12m $45/else $99; new dev $330 not waived).
+  - 50/20: $79/m ($10 off 3m, then $89)
+  - 100/40: $99/m ($10 off 3m, then $109)
+  - 250/100: $139/m ($10 off 3m, then $149)
+  - 500/200: $169/m ($10 off 3m, then $179)
+  - 1000/400: $189/m ($10 off 3m, then $199)
+
+  * HIR Business:
+  - 250/100: $109/m
+  - 500/200: $119/m
+  - 1000/400: $139/m
+
+  * Business VoIP/Cloud PBX: Extensions, CRM integration, etc.
+  - VoIP 30: $30/m (PAYG)
+  - VoIP 50: $50/m (unlimited local/national/mobile)
+  - Extra extensions: $10/m (1-10), $8/m (>10)
+
+- General Advice (expanded):
+  * Address/technology check: InfiNET tool or email support@infinetbroadband.com.au.
+  * Head Office: Level 15, Corporate Centre One, 2 Corporate Court, Bundall, QLD 4217.
+  * Phone: 1300 101 414.
+
+Always advise customers to check current pricing and availability via the address checker or support@infinetbroadband.com.au as promotions may change.
 `;
+
 /* ---------------- System prompt (includes KB) ---------------- */
 const SYSTEM_PROMPT = `
 You are a concise, professional voice/chat assistant for ${BRAND}.
