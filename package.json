@@ -13,6 +13,7 @@
     "multer": "^2.0.2",
     "node-fetch": "^3.3.2",
     "node-microphone": "^0.1.6",
+    "node-pre-gyp": "^0.17.0",
     "speaker": "^0.5.5",
     "uuid": "^13.0.0",
     "wrtc": "^0.4.7",
