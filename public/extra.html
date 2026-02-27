@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Voice Agent</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card-bg: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+      --muted:#9aa6bf;
+      --accent-start:#06b6d4;
+      --accent-end:#7c3aed;
+      --glass: rgba(255,255,255,0.03);
+      --success:#34d399;
+      --danger:#fb7185;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
+    body{
+      background: radial-gradient(800px 400px at 15% 15%, rgba(124,58,237,0.06), transparent 8%),
+                  radial-gradient(900px 450px at 90% 90%, rgba(6,182,212,0.05), transparent 8%),
+                  var(--bg);
+      display:flex;align-items:center;justify-content:center;padding:20px;color:#e6eef8;
+    }
+    .widget {
+      width:420px;
+      max-width:96vw;
+      border-radius:16px;
+      padding:18px;
+      background: var(--card-bg);
+      box-shadow: 0 12px 40px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+      border:1px solid rgba(255,255,255,0.03);
+      backdrop-filter: blur(8px) saturate(120%);
+    }
+    .header {display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .brand {display:flex;align-items:center;gap:12px}
+    .logo {width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent-start),var(--accent-end));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:white}
+    .title {font-weight:700;font-size:15px}
+    .sub {font-size:13px;color:var(--muted);margin-top:2px}
+    .mic-wrap {display:flex;flex-direction:column;align-items:center;gap:10px;margin:8px 0}
+    .mic {
+      position:relative;width:120px;height:120px;border-radius:999px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.04);
+      display:flex;align-items:center;justify-content:center;cursor:pointer;
+    }
+    .mic .core { width:76px;height:76px;border-radius:999px; display:flex;align-items:center;justify-content:center;}
+    .icon {width:40px;height:40px;display:block}
+    .mic-label {font-size:13px;color:var(--muted);font-weight:600;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,0.02)}
+    .status-row {display:flex;align-items:center;gap:12px;justify-content:center;margin-top:8px}
+    .status-badge {display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02);font-size:13px;color:var(--muted)}
+    .status-dot {width:10px;height:10px;border-radius:50%;background:var(--muted)}
+    .status-dot.listening { background: rgba(59,130,246,1) }
+    .status-dot.speaking { background: var(--success) }
+    .wave {width:100%;height:58px;margin-top:12px;border-radius:10px;overflow:hidden;background:linear-gradient(90deg, rgba(255,255,255,0.012), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.02);padding:8px;display:flex;align-items:center;justify-content:center}
+    canvas {width:100%;height:100%}
+    .actions {display:flex;align-items:center;gap:10px;justify-content:space-between;margin-top:12px}
+    .icon-btn {display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:8px 10px;border-radius:10px;background:transparent;border:0;color:var(--muted);cursor:pointer}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
+</head>
+<body>
+  <div class="widget" role="region" aria-label="Voice agent widget">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">VA</div>
+        <div>
+          <div class="title">Voice Agent</div>
+          <div class="sub">Tap to talk — auto-detects silence and auto-sends</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="forceSendBtn" class="icon-btn" title="Send now" aria-label="Send now">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 2L11 13"></path><path d="M21 2l-7 19-4-9-9-4 19-6z"></path></svg>
+        </button>
+        <button id="resetBtn" class="icon-btn" title="Reset session" aria-label="Reset session">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12a9 9 0 11-3-6.7"></path><polyline points="22 4 12 14 9 11"></polyline></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="mic-wrap">
+      <button id="micBtn" class="mic" aria-pressed="false" aria-label="Toggle microphone">
+        <div class="core" id="micCore">
+          <div id="micIcon" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 24 24" class="icon" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"></path><path d="M19 11v1a7 7 0 0 1-14 0v-1"></path><path d="M12 19v4"></path></svg>
+          </div>
+          <div id="stopIcon" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0">
+            <svg viewBox="0 0 24 24" class="icon" fill="currentColor"><rect x="7" y="7" width="10" height="10"></rect></svg>
+          </div>
+        </div>
+      </button>
+      <div id="micLabel" class="mic-label" aria-live="polite">Start</div>
+    </div>
+
+    <div class="status-row" aria-hidden="true">
+      <div class="status-badge" id="statusBadge"><div class="status-dot" id="statusDot"></div><div id="statusLabel" style="min-width:90px;text-align:left;color:var(--muted);font-weight:600">idle</div></div>
+    </div>
+
+    <div class="wave">
+      <canvas id="waveCanvas" width="800" height="50"></canvas>
+    </div>
+
+    <div class="actions" aria-hidden="true">
+      <div style="font-size:13px;color:var(--muted)">Microphone active while listening</div>
+      <div style="display:flex;gap:8px">
+        <button id="stopBtn" class="icon-btn" title="Stop" aria-label="Stop">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="6" y="6" width="12" height="12"></rect></svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="transcript" class="sr-only" aria-live="polite">Assistant text will appear here...</div>
+    <div id="fields" class="sr-only" aria-hidden="false"></div>
+    <audio id="player" controls class="sr-only"></audio>
+  </div>
+
+  <script src="voice-widget.js"></script>
+</body>
+</html>
