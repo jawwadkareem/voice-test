@@ -1,166 +1,346 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Mortgage Voice Agent — Natural</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>InfiNET Support Chat</title>
   <style>
-    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 800px; margin:auto; }
-    button { padding:8px 12px; margin:6px; }
-    #status { font-weight:600; }
-    #transcript { margin-top:10px; background:#f7f7f7; padding:8px; border-radius:6px; min-height:60px; }
+    :root {
+      --bg: #071025;
+      --card: #081224;
+      --muted: #a0b3d0;
+      --accent: #00c2b3;
+      --accent-2: #3b82f6;
+      --glass: rgba(255,255,255,0.035);
+      --radius: 16px;
+      --fs-base: clamp(13.5px, 3.1vw, 15px);
+      --spacing: clamp(10px, 3vw, 16px);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: var(--fs-base);
+      color: #f1f5f9;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: linear-gradient(165deg, #031022 0%, #0b223f 100%);
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 8px;
+    }
+    .widget {
+      width: min(100%, 420px);
+      height: min(96dvh, 760px);
+      border-radius: 20px;
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,0.07);
+      box-shadow: 0 8px 44px rgba(0,0,0,0.6);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(8px);
+    }
+    .header {
+      padding: 12px 16px;
+      background: linear-gradient(90deg, rgba(59,130,246,0.09), rgba(0,194,179,0.06));
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; flex: 1; }
+    .logo {
+      width: 42px; height: 42px; border-radius: 11px;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent));
+      color: white; font-weight: 700; font-size: 15px;
+      display: grid; place-items: center;
+      box-shadow: 0 3px 10px rgba(59,130,246,0.3);
+    }
+    .title h4 { font-size: clamp(14.5px, 3.8vw, 16px); }
+    .title p { font-size: clamp(11px, 2.9vw, 12px); color: var(--muted); margin-top: 2px; }
+    .status { display: flex; align-items: center; gap: 7px; font-size: clamp(11px, 2.9vw, 12.5px); color: var(--muted); white-space: nowrap; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; }
+    .dot.online { background: #22c55e; box-shadow: 0 0 6px #22c55e80; }
+
+    .messages-wrap { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+    .messages {
+      flex: 1; overflow-y: auto; padding: var(--spacing);
+      display: flex; flex-direction: column; gap: clamp(10px, 3vw, 14px);
+      scroll-behavior: smooth;
+    }
+    .bubble-row { display: flex; align-items: flex-end; gap: 9px; }
+    .msg {
+      max-width: 84%; padding: clamp(9px, 2.8vw, 12px) clamp(12px, 3.5vw, 15px);
+      border-radius: 15px; line-height: 1.45; font-size: clamp(13.5px, 3.4vw, 14.5px);
+      animation: appear 0.24s ease-out forwards; opacity: 0; transform: translateY(8px);
+      word-break: break-word;
+    }
+    .msg.agent { align-self: flex-start; background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.08); border-radius: 15px 15px 15px 5px; }
+    .msg.user { align-self: flex-end; background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: white; border-radius: 15px 15px 5px 15px; }
+    .avatar {
+      width: 38px; height: 38px; border-radius: 10px; background: #0f1e38;
+      color: #a5f3fc; font-weight: 600; font-size: 15px;
+      display: grid; place-items: center; flex-shrink: 0;
+    }
+    .meta { margin-top: 4px; font-size: clamp(10px, 2.7vw, 11px); color: var(--muted); opacity: 0.8; }
+
+    @keyframes appear { to { opacity:1; transform:none; } }
+
+    /* Name Collection Card - Exactly like the screenshot */
+    .name-card {
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 18px;
+      padding: 20px;
+      margin: 15px 0;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      animation: appear 0.3s ease-out;
+    }
+    .name-card h4 { margin-bottom: 12px; color: #f0fdfa; font-size: 15.5px; }
+    .name-card label { display: block; font-size: 13px; margin: 12px 0 6px; color: var(--muted); }
+    .name-card input {
+      width: 100%; padding: 12px; border-radius: 12px;
+      background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.09);
+      color: white; font-size: 15px;
+    }
+    .name-card input:focus { border-color: var(--accent); outline: none; }
+    .name-card button {
+      margin-top: 18px; width: 100%; padding: 14px;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent));
+      border: none; border-radius: 12px; color: white; font-weight: 600; font-size: 15px; cursor: pointer;
+    }
+    .name-card button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .composer {
+      padding: clamp(10px, 3vw, 14px) var(--spacing);
+      background: rgba(0,0,0,0.28);
+      display: flex; gap: 10px; flex-shrink: 0;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+    .input-wrap { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+    textarea {
+      width: 100%; min-height: 46px; max-height: 140px; resize: vertical;
+      padding: 11px 13px; border-radius: 13px;
+      background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.09);
+      color: inherit; font: inherit; outline: none; line-height: 1.42;
+    }
+    textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2.5px rgba(0,194,179,0.22); }
+    .hint { font-size: clamp(10px, 2.7vw, 11.5px); color: var(--muted); display: flex; justify-content: space-between; padding: 0 5px; }
+    .btn {
+      background: linear-gradient(90deg, var(--accent-2), var(--accent));
+      border: none; padding: 0 18px; border-radius: 12px;
+      color: white; font-weight: 600; font-size: clamp(13px, 3.4vw, 14.5px);
+      min-width: 62px; cursor: pointer;
+    }
+    .btn:hover:not(:disabled) { opacity: 0.94; transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.48; cursor: not-allowed; }
   </style>
 </head>
 <body>
-  <h1>Mortgage Voice Agent</h1>
-  <p>Speak naturally. Pause to send. Session is persisted in your browser.</p>
-  <div>
-    <button id="startBtn">Start</button>
-    <button id="stopBtn" disabled>Stop</button>
-    <span id="status">idle</span>
+  <div class="widget" role="region" aria-label="InfiNET customer support chat">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">IN</div>
+        <div class="title">
+          <h4>InfiNET Support</h4>
+          <p>Outages · Billing · Plans</p>
+        </div>
+      </div>
+      <div class="status" id="status">
+        <div class="dot online" id="statusDot"></div>
+        <span id="statusText">Online</span>
+      </div>
+    </div>
+    <div class="messages-wrap">
+      <div id="messages" class="messages" aria-live="polite"></div>
+    </div>
+    <div class="composer">
+      <div class="input-wrap">
+        <textarea id="txt" placeholder="Type your message… " aria-label="Chat message input"></textarea>
+        <div class="hint">
+          <span id="charCount">0</span>
+          <span>Enter to send</span>
+        </div>
+      </div>
+      <button class="btn" id="send">Send</button>
+    </div>
   </div>
-  <div id="transcript">Assistant text will appear here...</div>
-  <audio id="player" controls></audio>
 
-<script>
-const START_THRESHOLD = 0.02;
-const SILENCE_THRESHOLD = 0.015;
-const SILENCE_TIMEOUT_MS = 700;
-const POLL_INTERVAL_MS = 100;
-const MIME_TYPE = "audio/webm";
+  <script>
+    (async () => {
+      const messagesEl = document.getElementById('messages');
+      const txt = document.getElementById('txt');
+      const sendBtn = document.getElementById('send');
+      let sessionId = null;
+      let busy = false;
 
-const startBtn = document.getElementById("startBtn");
-const stopBtn = document.getElementById("stopBtn");
-const statusEl = document.getElementById("status");
-const transcriptEl = document.getElementById("transcript");
-const player = document.getElementById("player");
-
-let audioContext, analyser, mediaStream, mediaRecorder, dataArray;
-let monitoringInterval, audioChunks = [], speaking=false, silenceStart=null, running=false, playing=false;
-
-startBtn.onclick = async () => { startBtn.disabled=true; stopBtn.disabled=false; await startAgent(); };
-stopBtn.onclick = async () => { stopBtn.disabled=true; startBtn.disabled=false; await stopAgent(); };
-
-function getSessionId() {
-  let sid = localStorage.getItem("voiceAgent.sessionId");
-  if (!sid) {
-    sid = 's_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
-    localStorage.setItem("voiceAgent.sessionId", sid);
-  }
-  return sid;
-}
-
-async function startAgent() {
-  try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-  } catch (e) { alert("Microphone required: " + e.message); startBtn.disabled=false; stopBtn.disabled=true; return; }
-
-  audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  const src = audioContext.createMediaStreamSource(mediaStream);
-  analyser = audioContext.createAnalyser(); analyser.fftSize = 2048;
-  dataArray = new Float32Array(analyser.fftSize);
-  src.connect(analyser);
-  running = true;
-  statusEl.textContent = "listening...";
-  monitoringInterval = setInterval(monitor, POLL_INTERVAL_MS);
-  audioChunks = []; speaking=false; silenceStart=null;
-}
-
-async function stopAgent() {
-  running = false;
-  statusEl.textContent = "stopped";
-  if (monitoringInterval) clearInterval(monitoringInterval);
-  monitoringInterval = null;
-  if (mediaRecorder && mediaRecorder.state !== "inactive") try{ mediaRecorder.stop(); }catch(e){}
-  mediaRecorder = null;
-  if (mediaStream) { mediaStream.getTracks().forEach(t=>t.stop()); mediaStream = null; }
-  if (audioContext) try{ await audioContext.close(); }catch(e){} audioContext = null;
-}
-
-function monitor() {
-  if (!analyser) return;
-  analyser.getFloatTimeDomainData(dataArray);
-  let sum=0;
-  for (let i=0;i<dataArray.length;i++) sum += dataArray[i]*dataArray[i];
-  const rms = Math.sqrt(sum / dataArray.length);
-
-  if (playing) { speaking=false; silenceStart=null; return; }
-
-  if (!speaking && rms >= START_THRESHOLD) {
-    speaking = true; silenceStart=null; startRecording(); statusEl.textContent="speaking...";
-    return;
-  }
-
-  if (speaking) {
-    if (rms < SILENCE_THRESHOLD) {
-      if (!silenceStart) silenceStart = Date.now();
-      else if (Date.now() - silenceStart >= SILENCE_TIMEOUT_MS) {
-        silenceStart = null; speaking = false; stopAndSend(); statusEl.textContent="sending...";
+      function timeNow() {
+        return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       }
-    } else {
-      silenceStart = null;
-    }
-  }
-}
 
-function startRecording() {
-  if (!mediaStream) return;
-  if (mediaRecorder && mediaRecorder.state !== "inactive") return;
-  audioChunks = [];
-  try { mediaRecorder = new MediaRecorder(mediaStream, { mimeType: MIME_TYPE }); } catch(e) { mediaRecorder = new MediaRecorder(mediaStream); }
-  mediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) audioChunks.push(e.data); };
-  mediaRecorder.start();
-}
+      function escapeHtml(str) {
+        return String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' })[m]);
+      }
 
-async function stopAndSend() {
-  if (!mediaRecorder) { statusEl.textContent="listening..."; return; }
-  await new Promise((r) => { mediaRecorder.onstop = r; try{ mediaRecorder.stop(); }catch(e){ r(); } });
-  const blob = new Blob(audioChunks, { type: MIME_TYPE });
-  if (blob.size < 300) { statusEl.textContent="too short, continue..."; audioChunks=[]; mediaRecorder=null; return; }
-  if (monitoringInterval) { clearInterval(monitoringInterval); monitoringInterval=null; }
+      function renderMarkdown(text) {
+        let html = escapeHtml(text)
+          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+          .replace(/\n\s*\n/g, '</p><p>')
+          .replace(/\n/g, '<br>');
+        return `<p>${html}</p>`.replace(/<p><\/p>/g, '');
+      }
 
-  try {
-    statusEl.textContent = "uploading...";
-    const sid = getSessionId();
-    const fd = new FormData();
-    fd.append("audio", blob, "recording.webm");
-    fd.append("sessionId", sid);
-    const resp = await fetch("/api/voice", { method: "POST", body: fd });
-    const data = await resp.json();
-    if (!resp.ok) { statusEl.textContent = "Server error"; audioChunks=[]; mediaRecorder=null; monitoringInterval=setInterval(monitor, POLL_INTERVAL_MS); return; }
-    if (data.sessionId) localStorage.setItem("voiceAgent.sessionId", data.sessionId);
-    transcriptEl.textContent = data.text || "(no text returned)";
-    if (data.audioBase64) {
-      playing = true;
-      await playBase64(data.audioBase64);
-      playing = false;
-    }
-    statusEl.textContent = "listening...";
-  } catch (e) {
-    console.error(e);
-    statusEl.textContent = "network error";
-  } finally {
-    audioChunks = []; mediaRecorder = null;
-    if (!monitoringInterval && running) monitoringInterval = setInterval(monitor, POLL_INTERVAL_MS);
-  }
-}
+      function addMessage({ from = 'agent', text = '', meta = '' }) {
+        const row = document.createElement('div');
+        row.className = 'bubble-row';
+        const msg = document.createElement('div');
+        msg.className = `msg ${from}`;
+        msg.innerHTML = `<div class="text">${from === 'agent' ? renderMarkdown(text) : escapeHtml(text)}</div>`;
+        if (from === 'agent') {
+          const av = document.createElement('div');
+          av.className = 'avatar';
+          av.textContent = 'I';
+          row.append(av, msg);
+        } else {
+          row.append(msg);
+        }
+        const metaEl = document.createElement('div');
+        metaEl.className = 'meta';
+        metaEl.textContent = meta || timeNow();
+        row.appendChild(metaEl);
+        messagesEl.appendChild(row);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
 
-function playBase64(b64) {
-  return new Promise((resolve) => {
-    try {
-      const bytes = atob(b64);
-      const arr = new Uint8Array(bytes.length);
-      for (let i=0;i<bytes.length;i++) arr[i] = bytes.charCodeAt(i);
-      const blob = new Blob([arr.buffer], { type: "audio/mpeg" });
-      const url = URL.createObjectURL(blob);
-      player.src = url;
-      player.onended = () => { URL.revokeObjectURL(url); resolve(); };
-      player.onerror = () => { URL.revokeObjectURL(url); resolve(); };
-      player.play().catch(() => resolve());
-    } catch (e) { resolve(); }
-  });
-}
+      function setBusy(isBusy) {
+        busy = isBusy;
+        sendBtn.disabled = isBusy;
+      }
 
-window.addEventListener("beforeunload", async () => { await stopAgent(); });
-</script>
+      // ==================== NAME COLLECTION CARD (Exactly like screenshot) ====================
+      function showNameCard() {
+        const cardHTML = `
+          <div class="bubble-row">
+            <div class="name-card">
+              <h4>Nice to meet you, I'm...</h4>
+              <input type="text" id="fullName" placeholder="John Doe" />
+
+              <label>But you can call me...</label>
+              <input type="text" id="preferredName" placeholder="John" />
+
+              <button id="nameContinue">Continue</button>
+            </div>
+          </div>`;
+
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = cardHTML;
+        const card = tempDiv.firstElementChild;
+        messagesEl.appendChild(card);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+
+        const fullInput = document.getElementById('fullName');
+        const prefInput = document.getElementById('preferredName');
+        const continueBtn = document.getElementById('nameContinue');
+
+        // Auto-fill first name when typing full name
+        fullInput.addEventListener('input', () => {
+          const words = fullInput.value.trim().split(/\s+/);
+          prefInput.value = words[0] || '';
+        });
+
+        continueBtn.addEventListener('click', async () => {
+          const fullName = fullInput.value.trim();
+          let preferredName = prefInput.value.trim();
+
+          if (!fullName) {
+            alert("Please enter your full name");
+            return;
+          }
+          if (!preferredName) preferredName = fullName.split(' ')[0];
+
+          card.style.display = 'none';
+
+          addMessage({ from: 'user', text: `My full name is ${fullName}. You can call me ${preferredName}.` });
+
+          const res = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId,
+              message: `Nice to meet you! My full name is ${fullName}. But you can call me ${preferredName}.`,
+              channel: 'web'
+            })
+          });
+          const data = await res.json();
+          if (data?.text) addMessage({ from: 'agent', text: data.text });
+        });
+      }
+
+      // ==================== Send Message ====================
+      async function sendMessage() {
+        const message = txt.value.trim();
+        if (!message || busy) return;
+
+        setBusy(true);
+        addMessage({ from: 'user', text: message });
+        txt.value = '';
+        document.getElementById('charCount').textContent = '0';
+
+        const typingRow = document.createElement('div');
+        typingRow.className = 'bubble-row';
+        typingRow.innerHTML = `
+          <div class="typing-container" style="background: linear-gradient(135deg, rgba(59,130,246,0.07), rgba(0,194,179,0.06)); padding:10px 16px; border-radius:18px 18px 18px 4px;">
+            <span class="typing-text">Thinking</span>
+            <div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+          </div>`;
+        messagesEl.appendChild(typingRow);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+
+        try {
+          const res = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId, message, channel: 'web' })
+          });
+          const data = await res.json();
+          typingRow.remove();
+          if (data?.text) addMessage({ from: 'agent', text: data.text });
+        } catch (err) {
+          typingRow.remove();
+          addMessage({ from: 'agent', text: 'Sorry — something went wrong. Try again?' });
+        } finally {
+          setBusy(false);
+          txt.focus();
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+      }
+
+      // ==================== INIT ====================
+      async function init() {
+        setBusy(true);
+        try {
+          const res = await fetch('/api/chat/init', { method: 'POST' });
+          if (!res.ok) throw new Error();
+          const data = await res.json();
+          sessionId = data.sessionId;
+          addMessage({ from: 'agent', text: data.text || 'Hey, I am InfiNET Broadband. I\'d love for us to get to know each other a bit better.' });
+
+          // Show name card exactly like the screenshot
+          setTimeout(showNameCard, 800);
+        } catch (err) {
+          addMessage({ from: 'agent', text: 'Connection issue. Please try again later.' });
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      sendBtn.onclick = sendMessage;
+      txt.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
+      txt.oninput = () => document.getElementById('charCount').textContent = txt.value.length;
+
+      await init();
+      txt.focus();
+    })();
+  </script>
 </body>
 </html>
